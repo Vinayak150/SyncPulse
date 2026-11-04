@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "name": "syncpulse11",
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index.mjs" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

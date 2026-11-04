@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: syncpulse11-ai-copilot
+    runtime: node
+    plan: free
+    buildCommand: npm test
+    startCommand: npm run start:live
+    envVars:
+      - key: PORT
+        value: 4111
+      - key: NODE_ENV
+        value: production

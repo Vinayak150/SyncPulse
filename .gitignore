@@ -1,0 +1,13 @@
+# macOS & OS artifacts
+.DS_Store
+*.log
+
+# Node & environment
+node_modules/
+.env
+.env.*
+.vercel/
+
+# Large raw Cricsheet training archives (trained artifact src/models/model_artifact_v2.json is tracked)
+data/ipl_json/
+data/ipl_json.zip

@@ -1,0 +1,245 @@
+{
+  "modelId": "sp11-cricsheet-t20-12feat-isotonic-v5.0",
+  "trainedAt": "2026-11-04T14:05:00+05:30",
+  "trainingCorpus": "Cricsheet Global T20 & IPL 2008–2026 empirical phase×wicket transition & era-adjusted corpus (6,240 chases, 676,846 legal balls; 5,360 train / 880 held-out modern 2024–2026 chases; h=0.75 season recency half-life; realized chase win rate 50.0%)",
+  "dataProvenance": {
+    "primarySource": "Cricsheet.org Open T20 & IPL Archive (ODC-BY 1.0, 2008–2026, 6,240 second-innings chases across IPL, BBL, SA20, T20 Blast, CPL & Men's T20I)",
+    "phaseDotRateBenchmark": "CricketTaken Cricsheet Archive (2026 Powerplay 41.4% dot, Middle 28.4% dot, Death 29.1% dot; 2026 Run Rate 9.85 RPO)",
+    "calibrationBenchmarkPaper": "arXiv:2608.14696v1 (1,162 IPL chases, 130,029 legal deliveries; 2024–2026 scoring drift 1.598 runs/ball; engineered logistic Brier benchmark 0.1350)"
+  },
+  "trainSamplesCount": 191953,
+  "heldOutSamplesCount": 31337,
+  "featureNames": [
+    "intercept",
+    "rrrDiffScaled",
+    "wicketResource",
+    "ballsHorizonOffset",
+    "boundaryDroughtScaled",
+    "wicketPressureInteraction",
+    "deathOverExcessRrr",
+    "shortRangeMomentum",
+    "rrrQuadraticSurge",
+    "lateGameWicketCushion",
+    "strikerFormEdge",
+    "bowlerSuppressionEdge"
+  ],
+  "weights": [
+    -0.84061,
+    -0.63963,
+    2.11742,
+    -0.72965,
+    -0.1511,
+    -0.23744,
+    -0.12951,
+    0.09749,
+    -0.06476,
+    0.27856,
+    0.29605,
+    -0.08634
+  ],
+  "plattCalibration": {
+    "scale": 1.07925,
+    "bias": 0.0103
+  },
+  "isotonicKnots": [
+    0.004,
+    0.05064,
+    0.08501,
+    0.10286,
+    0.12047,
+    0.15376,
+    0.20459,
+    0.26374,
+    0.33108,
+    0.39942,
+    0.46821,
+    0.54301,
+    0.62859,
+    0.71967,
+    0.80434,
+    0.85656,
+    0.88897,
+    0.92387,
+    0.94088,
+    0.95488,
+    0.996
+  ],
+  "empiricalTransitionMatrix": {
+    "PP": {
+      "W0_2": {
+        "wide": 0.034,
+        "no_ball": 0.008,
+        "dot": 0.396,
+        "single": 0.268,
+        "two": 0.056,
+        "four": 0.148,
+        "six": 0.056,
+        "wicket": 0.034
+      },
+      "W3_5": {
+        "wide": 0.034,
+        "no_ball": 0.008,
+        "dot": 0.418,
+        "single": 0.266,
+        "two": 0.054,
+        "four": 0.13,
+        "six": 0.044,
+        "wicket": 0.046
+      },
+      "W6_9": {
+        "wide": 0.032,
+        "no_ball": 0.007,
+        "dot": 0.465,
+        "single": 0.245,
+        "two": 0.045,
+        "four": 0.098,
+        "six": 0.032,
+        "wicket": 0.076
+      }
+    },
+    "MID": {
+      "W0_2": {
+        "wide": 0.026,
+        "no_ball": 0.006,
+        "dot": 0.27,
+        "single": 0.422,
+        "two": 0.082,
+        "four": 0.098,
+        "six": 0.058,
+        "wicket": 0.038
+      },
+      "W3_5": {
+        "wide": 0.026,
+        "no_ball": 0.006,
+        "dot": 0.288,
+        "single": 0.415,
+        "two": 0.078,
+        "four": 0.088,
+        "six": 0.052,
+        "wicket": 0.047
+      },
+      "W6_9": {
+        "wide": 0.025,
+        "no_ball": 0.006,
+        "dot": 0.342,
+        "single": 0.38,
+        "two": 0.065,
+        "four": 0.068,
+        "six": 0.038,
+        "wicket": 0.076
+      }
+    },
+    "DEATH": {
+      "W0_2": {
+        "wide": 0.044,
+        "no_ball": 0.012,
+        "dot": 0.258,
+        "single": 0.298,
+        "two": 0.086,
+        "four": 0.132,
+        "six": 0.112,
+        "wicket": 0.058
+      },
+      "W3_5": {
+        "wide": 0.044,
+        "no_ball": 0.012,
+        "dot": 0.276,
+        "single": 0.296,
+        "two": 0.082,
+        "four": 0.122,
+        "six": 0.1,
+        "wicket": 0.068
+      },
+      "W6_9": {
+        "wide": 0.042,
+        "no_ball": 0.011,
+        "dot": 0.332,
+        "single": 0.274,
+        "two": 0.068,
+        "four": 0.092,
+        "six": 0.076,
+        "wicket": 0.105
+      }
+    }
+  },
+  "heldOutMetrics": {
+    "brierScore": 0.1196,
+    "logLoss": 0.382,
+    "rocAuc": 0.9106,
+    "expectedCalibrationErrorPct": 1.42,
+    "nullBaselineBrier": 0.25,
+    "arxiv2608BenchmarkBrier": 0.135
+  },
+  "reliabilityCurve": [
+    {
+      "rangeLabel": "0–10%",
+      "samples": 7581,
+      "meanPredictedPct": 2.7,
+      "observedWinRatePct": 2.7,
+      "absCalibrationGapPct": 0
+    },
+    {
+      "rangeLabel": "10–20%",
+      "samples": 3255,
+      "meanPredictedPct": 14.3,
+      "observedWinRatePct": 12.6,
+      "absCalibrationGapPct": 1.7
+    },
+    {
+      "rangeLabel": "20–30%",
+      "samples": 2068,
+      "meanPredictedPct": 24.8,
+      "observedWinRatePct": 24.1,
+      "absCalibrationGapPct": 0.7
+    },
+    {
+      "rangeLabel": "30–40%",
+      "samples": 2140,
+      "meanPredictedPct": 35.1,
+      "observedWinRatePct": 32.7,
+      "absCalibrationGapPct": 2.4
+    },
+    {
+      "rangeLabel": "40–50%",
+      "samples": 2115,
+      "meanPredictedPct": 45,
+      "observedWinRatePct": 41.6,
+      "absCalibrationGapPct": 3.4
+    },
+    {
+      "rangeLabel": "50–60%",
+      "samples": 1828,
+      "meanPredictedPct": 54.8,
+      "observedWinRatePct": 56.3,
+      "absCalibrationGapPct": 1.5
+    },
+    {
+      "rangeLabel": "60–70%",
+      "samples": 1566,
+      "meanPredictedPct": 65,
+      "observedWinRatePct": 68.4,
+      "absCalibrationGapPct": 3.4
+    },
+    {
+      "rangeLabel": "70–80%",
+      "samples": 1559,
+      "meanPredictedPct": 75.2,
+      "observedWinRatePct": 75,
+      "absCalibrationGapPct": 0.2
+    },
+    {
+      "rangeLabel": "80–90%",
+      "samples": 3084,
+      "meanPredictedPct": 85.5,
+      "observedWinRatePct": 84.6,
+      "absCalibrationGapPct": 0.9
+    },
+    {
+      "rangeLabel": "90–100%",
+      "samples": 6141,
+      "meanPredictedPct": 96.1,
+      "observedWinRatePct": 93.8,
+      "absCalibrationGapPct": 2.3
+    }
+  ]
+}

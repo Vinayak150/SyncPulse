@@ -1,0 +1,29 @@
+{
+  "name": "syncpulse11-v5-5-dream11-fde",
+  "version": "5.5.0",
+  "description": "SyncPulse11 V5.5: The Spoiler-Safe AI Cricket Co-Pilot, Dynamic NetworkX Graph Topology, 12-Feature Isotonic Quant Engine & Live Telemetry Hub",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/test_syncpulse11.mjs && node tests/e2e_dom_verify.mjs",
+    "test:unit": "node tests/test_syncpulse11.mjs",
+    "test:e2e": "node tests/e2e_dom_verify.mjs",
+    "train": "node scripts/train_and_calibrate_wp.mjs",
+    "start": "node src/server/liveTelemetryServer.mjs",
+    "start:live": "node src/server/liveTelemetryServer.mjs"
+  },
+  "keywords": [
+    "cricket",
+    "second-screen",
+    "spoiler-safe",
+    "ai-copilot",
+    "xai-grok",
+    "networkx-graph",
+    "pagerank",
+    "monte-carlo",
+    "live-telemetry",
+    "sse",
+    "dream11-fde"
+  ],
+  "author": "Vinayak Mahindrakar",
+  "license": "MIT"
+}
