@@ -125,6 +125,11 @@
         <button type="button" class="lc-sport" data-lc-sport="badminton">🏸 Badminton <small>Limited fixtures</small></button>
         <button type="button" class="lc-sport" data-lc-sport="cricket">🏏 Cricket <small>Provider required</small></button>
       </div>
+      <div class="lc-quickstart" aria-label="Three easy steps to use SyncPulse11">
+        <div class="lc-step"><span>01</span><div><strong>Choose your sport</strong><small>Find an externally reported fixture</small></div></div>
+        <div class="lc-step"><span>02</span><div><strong>Follow a match</strong><small>Incoming results stay hidden</small></div></div>
+        <div class="lc-step"><span>03</span><div><strong>Reveal when ready</strong><small>See one buffered update at a time</small></div></div>
+      </div>
       <div class="lc-main-grid">
         <div class="lc-fixture-column">
           <div class="lc-list-header"><span id="lcSportTitle">Tennis · ATP / WTA</span><span id="lcMatchCount">Connecting…</span></div>
@@ -136,9 +141,10 @@
           <div id="lcSelected" class="lc-selected"><span class="lc-selected-overline">NO MATCH FOLLOWED</span><h4>Select a fixture to begin</h4><p>Scores are never auto-revealed. Follow a match, then decide when to view the next verified snapshot.</p></div>
           <div class="lc-snapshot">
             <div class="lc-snapshot-top"><span>YOUR LAST REVEALED SCORE</span><span id="lcSourceTime">Awaiting source</span></div>
-            <div id="lcVisibleScore" class="lc-score-main">— <span>Shielded</span></div>
+            <div id="lcVisibleScore" class="lc-score-main" aria-live="polite">— <span>Shielded</span></div>
+            <div id="lcVisibleMatchStatus" class="lc-score-status">Match status remains hidden until you reveal a source snapshot.</div>
             <div id="lcPending" class="lc-pending">Choose a match to watch for updates.</div>
-            <button type="button" id="lcReveal" class="lc-primary lc-reveal" disabled>Reveal latest provider snapshot <span aria-hidden="true">→</span></button>
+            <button type="button" id="lcReveal" class="lc-primary lc-reveal" disabled>Reveal first buffered score →</button>
           </div>
           <div class="lc-intel"><span class="lc-section-kicker">03 / EVIDENCE-GROUNDED INSIGHT</span><h4 id="lcInsightTitle">Awaiting your first reveal</h4><p id="lcInsightBody">Unlike a prediction, this briefing uses only confirmed, manually revealed source snapshots. No hidden match outcomes are sent to this panel.</p><div id="lcEvidence" class="lc-evidence"></div></div>
           <div class="lc-note">The score cursor is controlled by you. We cannot automatically align it to a TV or OTT delay without a verified playback clock. No video is hosted here.</div>

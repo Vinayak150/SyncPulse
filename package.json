@@ -7,6 +7,7 @@
     "test": "node tests/test_syncpulse11.mjs && node tests/e2e_dom_verify.mjs && node tests/security_http_verify.mjs && node tests/fan_focus_verify.mjs && node tests/fan_focus_dom_verify.mjs && node tests/live_center_verify.mjs",
     "test:unit": "node tests/test_syncpulse11.mjs",
     "test:e2e": "node tests/e2e_dom_verify.mjs",
+    "test:browser": "node tests/release_browser_verify.cjs",
     "train": "node scripts/train_and_calibrate_wp.mjs",
     "start": "node src/server/liveTelemetryServer.mjs",
     "start:live": "node src/server/liveTelemetryServer.mjs"

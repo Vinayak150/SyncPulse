@@ -9,7 +9,7 @@ export function appendSnapshot(buffer,visible,incoming,max=40){
  if(!incoming)return {buffer:[...buffer],dropped:0};
  const last=buffer.at(-1)||visible;
  if(last?.id===incoming.id&&last.scoreText===incoming.scoreText&&last.status===incoming.status)return {buffer:[...buffer],dropped:0};
- const next=[...buffer,{...incoming,events:Array.isArray(incoming.events)?incoming.events.map(e=>({...e})):[]}];
+ const next=[...buffer,{...incoming,observedAt:incoming.observedAt||null,events:Array.isArray(incoming.events)?incoming.events.map(e=>({...e})):[]}];
  const dropped=Math.max(0,next.length-max);
  return {buffer:next.slice(dropped),dropped};
 }
@@ -60,7 +60,8 @@ export function mountLiveCenter(root=document,options={}){
   selectedId=null;visible=null;pending=null;lastRevealed=null;buffer=[];droppedCount=0;
  }
  function queueIncoming(incoming){
-  const result=appendSnapshot(buffer,visible,incoming,40);
+  // Capture observation time once. Subsequent catalog refreshes cannot rewrite a revealed timestamp.
+  const result=appendSnapshot(buffer,visible,{...incoming,observedAt:incoming.observedAt||catalog?.fetchedAt||new Date().toISOString()},40);
   buffer=result.buffer;droppedCount+=result.dropped;pending=buffer[0]||null;
  }
  function render(){
@@ -79,7 +80,9 @@ export function mountLiveCenter(root=document,options={}){
   for(const btn of root.querySelectorAll('[data-lc-sport]')){
    const on=btn.getAttribute('data-lc-sport')===sport;btn.classList.toggle('is-selected',on);btn.setAttribute('aria-pressed',String(on));
   }
-  const list=byId('lcMatchList');list.replaceChildren();
+  const list=byId('lcMatchList');
+  const focusedMatchId=list.contains(root.activeElement)?root.activeElement?.dataset?.matchId:null;
+  list.replaceChildren();
   if(!catalog?.matches?.length){
    const div=root.createElement('div');div.className='lc-empty';
    div.textContent=status==='CONFIG_REQUIRED'?'Cricket scores need an authorized provider key. The Demo Lab remains fully usable; we never mislabel its simulation as live.':
@@ -89,6 +92,7 @@ export function mountLiveCenter(root=document,options={}){
   }
   for(const m of catalog?.matches||[]){
    const btn=root.createElement('button');btn.type='button';btn.className='lc-match'+(selectedId===m.id?' is-followed':'');
+   btn.dataset.matchId=m.id;
    btn.setAttribute('aria-pressed',String(selectedId===m.id));
    const content=root.createElement('div');content.className='lc-match-content';
    const league=root.createElement('div');league.className='lc-match-league';league.textContent=(m.league||sport)+(m.stage?' · '+m.stage:'');
@@ -97,33 +101,39 @@ export function mountLiveCenter(root=document,options={}){
    content.append(league,teams,time);
    const right=root.createElement('div');right.className='lc-match-right';
    const state=root.createElement('span');state.className='lc-state lc-state-'+(m.status==='LIVE'?'live':m.status==='SCHEDULED'?'scheduled':'final');
-   state.textContent=m.status==='LIVE'?'● PROVIDER LIVE':m.status==='FINAL'?'FINAL':m.status==='SCHEDULED'?'UPCOMING':'UNCONFIRMED';
+   // Even match completion can be a spoiler. Only scheduled (future) fixtures are marked publicly.
+   // In particular, an old live match becoming FINAL cannot spoil a delayed fan's outcome.
+   state.textContent=m.status==='SCHEDULED'?'UPCOMING':'◈ STATUS SHIELDED';
    const shield=root.createElement('span');shield.className='lc-obscured';shield.textContent='♢ SCORE SHIELDED';
    right.append(state,shield);btn.append(content,right);
    btn.addEventListener('click',()=>{
     if(selectedId!==m.id){selectedId=m.id;visible=null;lastRevealed=null;buffer=[];droppedCount=0;}
-    queueIncoming(m);render();
+    if(catalog?.status==='OK'&&!catalog?.stale)queueIncoming(m);
+    render();
     byId('lcReveal').focus();
    });
    list.appendChild(btn);
   }
+  if(focusedMatchId){const same=[...list.querySelectorAll('[data-match-id]')].find(b=>b.dataset.matchId===focusedMatchId);same?.focus();}
   const current=match();
   const selected=byId('lcSelected');selected.replaceChildren();
   const overline=root.createElement('span');overline.className='lc-selected-overline';
   overline.textContent=current?'FOLLOWING / '+sport.toUpperCase():'NO MATCH FOLLOWED';
   const title=root.createElement('h4');title.textContent=current?current.home+' vs '+current.away:'Select a fixture to begin';
-  const desc=root.createElement('p');desc.textContent=current?(current.league+' · '+(current.stage||current.providerStatus||'External match record')):
+  const desc=root.createElement('p');desc.textContent=current?(current.league+' · '+(current.stage||'Externally sourced fixture')):
     'Match cards deliberately conceal the score. Select a fixture, then reveal only when your stream has caught up.';
   selected.append(overline,title,desc);
   const latest=current?pending:null;
   const reveal=byId('lcReveal');reveal.disabled=!latest||isStale||!providerOk;
   reveal.textContent=visible?'Reveal next buffered update  →':'Reveal first buffered score  →';
+  reveal.setAttribute('aria-label',buffer.length?`Reveal 1 of ${buffer.length} buffered score snapshots`:'No new score updates available');
   setText('lcPending',!current?'Follow a fixture to protect its incoming results.':
    isStale?'Provider refresh failed. Updates are stale; manual reveal is disabled.':
    buffer.length>0?'◈ '+buffer.length+' source snapshot'+(buffer.length===1?'':'s')+' waiting in order behind SyncShield.'+(droppedCount?' '+droppedCount+' oldest updates were dropped after buffer saturation.':''):
    'No newly observed score changes. Next provider refresh is buffered, not auto-revealed.');
   setText('lcVisibleScore',visible?visible.scoreText:'♢  Score hidden');
-  setText('lcSourceTime',visible?'Revealed '+dateLabel(visible.updatedAt||catalog?.fetchedAt):'Not yet revealed');
+  setText('lcVisibleMatchStatus',visible?'Provider status at reveal: '+(visible.providerStatus||visible.status):'Status and result protected until reveal');
+  setText('lcSourceTime',visible?'Snapshot received '+dateLabel(visible.observedAt||visible.updatedAt||null):'Not yet revealed');
   const info=summarizeRevealed(visible,lastRevealed);
   setText('lcInsightTitle',info.title);setText('lcInsightBody',info.text);
   const evidence=byId('lcEvidence');evidence.replaceChildren();
@@ -148,7 +158,7 @@ export function mountLiveCenter(root=document,options={}){
    catalog=data;
    if(selectedId){
     const next=match();
-    if(next){queueIncoming(next);}else{
+    if(next){if(data.status==='OK'&&!data.stale)queueIncoming(next);}else{
       // Preserve the fan's already-revealed data, but do not invent a fresh update.
       buffer=[];pending=null;
       if(visible)catalog={...data,matches:[{...visible,status:'UNCONFIRMED',detail:'No longer returned in the current provider window; data is stale.'},...data.matches],status:'STALE',stale:true,message:'Followed fixture is no longer in the current feed. Last revealed information is retained but is stale.'};
@@ -170,7 +180,7 @@ export function mountLiveCenter(root=document,options={}){
  }
  function reveal(){
   const current=match();
-  if(!current||!pending||catalog?.stale||catalog?.status==='UNAVAILABLE')return;
+  if(!current||!pending||catalog?.stale||catalog?.status!=='OK')return;
   lastRevealed=visible;
   visible=buffer.shift()||null;
   pending=buffer[0]||null;

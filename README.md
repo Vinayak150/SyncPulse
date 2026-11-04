@@ -20,7 +20,7 @@ This experience fetches **actual external scoreboard records**, with honest stat
 | Badminton | [TheSportsDB public v1](https://www.thesportsdb.com/documentation) | Partial free fixture discovery only | Free tier does **not** provide a verified real-time point-by-point feed |
 | Cricket | [CricAPI](https://www.cricapi.com/) | Provider-backed match summaries **only if an authorized `CRICAPI_KEY` is set** | No real feed without credentials, and summaries are not ball-by-ball event synchronization |
 
-**Live Match Center flow:** choose a sport -> select a fixture (the score remains hidden) -> let the provider refresh -> reveal **one oldest buffered snapshot at a time** -> receive a factual, evidence-limited summary of score differences. The app checks for new source snapshots every 45 seconds and shares a 40-second server cache across visitors. It buffers a maximum of 40 changed score snapshots; overflow is explicitly disclosed. Scheduled matches display no invented 0-0 scores. Unavailable or stale sources remain labeled as such, with no artificial fallback.
+**Live Match Center flow:** follow the clearly marked **three-step flow**: choose a sport -> select a fixture (both score and result status remain hidden) -> reveal **one oldest buffered snapshot at a time** when ready -> receive a factual, evidence-limited summary of score differences. The app checks for new source snapshots every 45 seconds and shares a 40-second server cache across visitors. It buffers a maximum of 40 changed score snapshots; overflow is explicitly disclosed. Scheduled matches display no invented 0-0 scores. Unavailable or stale sources remain labeled as such, with no artificial fallback.
 
 **Honest synchronization limitation:** Without the actual OTT/player playback timestamp or a verified delivery/point ID feed, the app **cannot automatically infer when the viewer has seen an event**. SyncShield therefore implements manual disclosure of provider snapshots rather than asserting automatic video-perfect alignment. No unseen provider scores are rendered in the fixture list, visible scoreboard, or contextual insights. Browser network developer tools can still inspect returned JSON; preventing that would require a trusted server-side per-viewer buffer with authenticated playback synchronization.
 
@@ -74,6 +74,16 @@ npm test
 node tests/live_center_verify.mjs
 node tests/public_smoke_verify.mjs
 ```
+
+Optional repeatable real-browser acceptance, requiring Playwright and an installed Chromium/Chrome browser:
+
+```bash
+# In a second terminal with the local server already running:
+# npm install --no-save playwright  # only if Playwright is not installed
+TEST_BASE_URL=http://localhost:4111 npm run test:browser
+```
+
+The browser release check intercepts one tennis provider response using **explicitly mocked test fixtures**, so its result verifies the spoiler and reveal behavior, not real-world tennis scores.
 
 The default tests cover cricket invariants, original VM DOM flows, HTTP security, Fan Focus, source normalization, concurrency, cache behavior and FIFO spoiler isolation. See `ENGINEERING_AUDIT.md` for the exact counts and limitations, and `SUBMISSION_NOTE_AND_DEMO_SCRIPT.md` for the assignment's under-200-word submission note.
 

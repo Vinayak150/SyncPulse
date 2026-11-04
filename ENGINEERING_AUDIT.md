@@ -74,3 +74,13 @@ The 200-word submission statement is maintained in `SUBMISSION_NOTE_AND_DEMO_SCR
 - Live Render deployment is checked separately after each GitHub push.
 
 **Operating caveats:** Free hosting cold starts, incomplete badminton/cricket source coverage without authorization, ESPN endpoint use subject to upstream conditions, no real video playback synchronization, no licensed ball-by-ball feed, and synthetic-only cricket model validation. These limitations are disclosed, not concealed.
+
+## Final submission hardening audit (4 November 2026)
+
+A last focused UI, source-integrity and accessibility pass found and fixed: (1) match cards disclosing FINAL before the delayed viewer revealed it; (2) selected-match metadata leaking the upstream final status; (3) a revealed score's time silently shifting to a later provider refresh; (4) possible ingestion of stale provider results into the active reveal queue; (5) keyboard focus loss during periodic fixture re-rendering.
+
+The Live Match Center now introduces a clear three-step flow: choose sport, follow fixture, manually reveal. Both score and completion status remain shielded until explicit reveal. A bounded FIFO buffer still preserves order. Already-revealed snapshot receipt times remain stable across refreshes, and stale source responses do not enter the queue. Keyboard focus is restored on the same fixture after list updates, with an accessible queue count on the reveal control. The original cricket Demo Lab is unchanged.
+
+**New repeatable optional Chrome test:** `tests/release_browser_verify.cjs`, invoked via `npm run test:browser` with Playwright installed and `TEST_BASE_URL` pointing to a running server. It covers 12 explicit assertions including final-score noninterference, stable timestamp, responsive three-step onboarding, and actual browser runtime exceptions. Synthetic fixtures in this test are clearly mocked, not real data.
+
+**Important boundaries:** A web page cannot prove that every browser, data-provider update, upstream contract, or production failure mode is bug-free. Automatic OTT/player sync remains out of scope, so this is manual spoiler protection with externally sourced score snapshots. JSON sent to the browser remains visible in developer tools. These should be stated clearly in the interview, not represented as infrastructure-grade protection.
