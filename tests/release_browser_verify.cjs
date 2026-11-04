@@ -16,6 +16,7 @@ await page.goto(base,{waitUntil:'domcontentloaded',timeout:30000});
 await page.waitForFunction(()=>document.querySelectorAll('.lc-match').length===1,{timeout:10000});
 await ck('Clear three-step onboarding visible',async()=>{if(await page.locator('.lc-step').count()!==3)throw Error('Steps missing')});
 await ck('Fixture card has no result or final-status spoiler',async()=>{const t=await page.locator('.lc-match').first().innerText();if(t.includes('6 / 3')||t.includes('FINAL'))throw Error(t)});
+const badgeClassBefore=await page.locator('.lc-match .lc-state').first().getAttribute('class');
 await page.locator('.lc-match').first().click();
 await ck('Initial match remains shielded',async()=>{if(!(await page.locator('#lcVisibleScore').innerText()).includes('hidden'))throw Error('Score leaked')});
 await ck('Initial status remains shielded',async()=>{if(!(await page.locator('#lcVisibleMatchStatus').innerText()).includes('protected'))throw Error('Status leaked')});
@@ -25,10 +26,33 @@ await ck('Initial reveal presents match score and status',async()=>{if((await pa
 await page.locator('#lcRefresh').click();await page.waitForFunction(()=>document.querySelector('#lcPending')?.textContent?.includes('1 source snapshot'),{timeout:12000});
 await ck('Finished status stays shielded on fixture cards',async()=>{const t=await page.locator('.lc-match').first().innerText();if(t.includes('FINAL')||t.includes('Final'))throw Error(t)});
 await ck('Finished status stays shielded in selected match details',async()=>{if((await page.locator('#lcSelected').innerText()).includes('Final'))throw Error('Status leaked')});
+await ck('Hidden match completion does not change badge styling',async()=>{const c=await page.locator('.lc-match .lc-state').first().getAttribute('class');if(c!==badgeClassBefore)throw Error('Visual status leak: '+badgeClassBefore+' -> '+c)});
 await ck('Finished status stays shielded in viewer status until reveal',async()=>{if(!(await page.locator('#lcVisibleMatchStatus').innerText()).includes('In Progress'))throw Error('Future leaked')});
 await ck('Previously revealed snapshot time does not drift',async()=>{if((await page.locator('#lcSourceTime').innerText())!==tFirst)throw Error('Time drifted: '+tFirst)});
 await page.locator('#lcReveal').click();
 await ck('Final status appears after explicit reveal',async()=>{if(!(await page.locator('#lcVisibleMatchStatus').innerText()).includes('Final'))throw Error('Final not revealed')});
+await ck('URL hash navigation switches into the cricket demo',async()=>{
+ await page.evaluate(()=>{location.hash='#demo'});
+ await page.waitForFunction(()=>!document.getElementById('demoAppShell').hidden,{timeout:4000});
+ if(await page.locator('#liveCenterRoot').isVisible())throw Error('Live Center still shown');
+});
+await ck('URL hash navigation switches back to Live Match Center',async()=>{
+ await page.evaluate(()=>{location.hash='#live'});
+ await page.waitForFunction(()=>!document.getElementById('liveCenterRoot').hidden,{timeout:4000});
+ if(await page.locator('#demoAppShell').isVisible())throw Error('Demo still shown');
+});
+await page.route('**/api/sports/matches?sport=badminton',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Temporarily unavailable'})}));
+await page.locator('[data-lc-sport="badminton"]').click();
+await page.waitForFunction(()=>document.getElementById('lcStatusBadge')?.textContent.includes('unavailable'),{timeout:7000});
+await ck('Unavailable sport does not link to unrelated provider',async()=>{
+ const link=await page.locator('#lcSourceLink').getAttribute('href');
+ if(link!=='https://www.thesportsdb.com/')throw Error('Wrong provider source: '+link);
+ if(!(await page.locator('#lcSourceName').innerText()).includes('BADMINTON UNAVAILABLE'))throw Error('Missing source failure');
+});
+await ck('Unavailable fixture list contains no simulated score',async()=>{
+ if(await page.locator('.lc-match').count())throw Error('Synthetic fallback inserted');
+ if(!(await page.locator('#lcProviderMessage').innerText()).includes('could not be reached'))throw Error('Missing failure feedback');
+});
 await ck('No browser exception',async()=>{if(errors.length)throw Error(errors.join('; '))});
 const mobile=await b.newPage({viewport:{width:390,height:844},isMobile:true});
 await mobile.goto(base,{waitUntil:'domcontentloaded'});

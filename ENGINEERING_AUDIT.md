@@ -84,3 +84,15 @@ The Live Match Center now introduces a clear three-step flow: choose sport, foll
 **New repeatable optional Chrome test:** `tests/release_browser_verify.cjs`, invoked via `npm run test:browser` with Playwright installed and `TEST_BASE_URL` pointing to a running server. It covers 12 explicit assertions including final-score noninterference, stable timestamp, responsive three-step onboarding, and actual browser runtime exceptions. Synthetic fixtures in this test are clearly mocked, not real data.
 
 **Important boundaries:** A web page cannot prove that every browser, data-provider update, upstream contract, or production failure mode is bug-free. Automatic OTT/player sync remains out of scope, so this is manual spoiler protection with externally sourced score snapshots. JSON sent to the browser remains visible in developer tools. These should be stated clearly in the interview, not represented as infrastructure-grade protection.
+
+## Final professional micro-review (4 November 2026)
+
+This pass adds **no new product functionality**. It corrects three small but meaningful release defects discovered through code inspection and real Chrome tests:
+
+1. **Wrong source attribution on a failed first fetch:** when badminton/tennis data was unavailable and the result contained no source metadata, the footer could link to OpenLigaDB regardless of selected sport. Source links now follow the selected provider even during an outage; the footer reports source unavailability instead of claiming to be connecting indefinitely.
+2. **URL and displayed experience could diverge:** changing the browser URL hash after load did not update Live vs Demo. A single hash-change listener now keeps the view and URL consistent; it is removed on disposal.
+3. **Non-textual spoiler signal:** unrevealed match cards hid the final status as text but used a different CSS badge class for LIVE vs FINAL. They now share the same neutral badge styling until explicitly revealed; scheduled matches remain marked as upcoming.
+
+**Other professional polish:** added a factual page description and theme color, expanded repeatable Playwright acceptance tests to **17 browser assertions** for link attribution, unavailable-source behavior, URL navigation and unrevealed status styling. The pre-existing 136 automated assertions and legacy Demo Lab flows are re-run independently.
+
+**Remaining limitations unchanged:** no licensed playback-event synchronization, provider score JSON visible to browser devtools, incomplete cricket/badminton coverage, unofficial tennis API, synthetic-only cricket model calibration, Render free cold starts, no comprehensive external security or accessibility certification. These are not resolved by this patch.

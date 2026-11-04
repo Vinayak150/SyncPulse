@@ -5,6 +5,7 @@
  */
 const SPORTS=['football','tennis','badminton','cricket'];
 const NAMES={football:'Football · Bundesliga',tennis:'Tennis · ATP / WTA',badminton:'Badminton · Limited fixtures',cricket:'Cricket · Authorized feed'};
+const SOURCE_LINKS={football:'https://www.openligadb.de/',tennis:'https://www.espn.com/tennis/',badminton:'https://www.thesportsdb.com/',cricket:'https://www.cricapi.com/'};
 export function appendSnapshot(buffer,visible,incoming,max=40){
  if(!incoming)return {buffer:[...buffer],dropped:0};
  const last=buffer.at(-1)||visible;
@@ -73,10 +74,10 @@ export function mountLiveCenter(root=document,options={}){
   setText('lcMatchCount',(catalog?.matches?.length||0)+' fixtures');
   setText('lcStatusBadge',loading?'Refreshing provider…':isStale?'⚠ Cached · refresh failed':status==='OK'?'● Provider connected':status==='CONFIG_REQUIRED'?'Connector required':status==='UNAVAILABLE'?'Source unavailable':'Connecting…');
   setText('lcProviderMessage',catalog?.message||'Contacting the external score source. No synthetic fallbacks.');
-  setText('lcSourceName',src?'SOURCE / '+src.name.toUpperCase():'SOURCE / CONNECTING');
+  setText('lcSourceName',src?'SOURCE / '+src.name.toUpperCase():status==='CONNECTING'?'SOURCE / CONNECTING':'SOURCE / '+sport.toUpperCase()+' UNAVAILABLE');
   setText('lcFetchTime',catalog?.fetchedAt?'Fetched '+dateLabel(catalog.fetchedAt)+(isStale?' · stale data':''):'Awaiting response');
   const sourceLink=byId('lcSourceLink');
-  if(sourceLink){sourceLink.href=src?.url||'https://www.openligadb.de/';sourceLink.textContent='View provider ↗';}
+  if(sourceLink){sourceLink.href=src?.url||SOURCE_LINKS[sport];sourceLink.textContent=src?'View provider ↗':'Provider information ↗';}
   for(const btn of root.querySelectorAll('[data-lc-sport]')){
    const on=btn.getAttribute('data-lc-sport')===sport;btn.classList.toggle('is-selected',on);btn.setAttribute('aria-pressed',String(on));
   }
@@ -100,7 +101,7 @@ export function mountLiveCenter(root=document,options={}){
    const time=root.createElement('div');time.className='lc-match-time';time.textContent=dateLabel(m.startTime);
    content.append(league,teams,time);
    const right=root.createElement('div');right.className='lc-match-right';
-   const state=root.createElement('span');state.className='lc-state lc-state-'+(m.status==='LIVE'?'live':m.status==='SCHEDULED'?'scheduled':'final');
+   const state=root.createElement('span');state.className=m.status==='SCHEDULED'?'lc-state lc-state-scheduled':'lc-state';
    // Even match completion can be a spoiler. Only scheduled (future) fixtures are marked publicly.
    // In particular, an old live match becoming FINAL cannot spoil a delayed fan's outcome.
    state.textContent=m.status==='SCHEDULED'?'UPCOMING':'◈ STATUS SHIELDED';
@@ -186,6 +187,8 @@ export function mountLiveCenter(root=document,options={}){
   pending=buffer[0]||null;
   render();
  }
+ const onHashChange=()=>modeSet(typeof location!=='undefined'&&location.hash==='#demo'?'demo':'live');
+ if(typeof window!=='undefined')window.addEventListener('hashchange',onHashChange);
  byId('xpGoLive').addEventListener('click',()=>modeSet('live'));
  byId('xpGoDemo').addEventListener('click',()=>modeSet('demo'));
  byId('lcGoDemo').addEventListener('click',()=>modeSet('demo'));
@@ -195,7 +198,7 @@ export function mountLiveCenter(root=document,options={}){
  for(const button of root.querySelectorAll('[data-lc-sport]'))button.addEventListener('click',()=>switchSport(button.getAttribute('data-lc-sport')));
  loop=setInterval(()=>{if(mode==='live'&&!disposed && (typeof document==='undefined'||document.visibilityState==='visible'))load();},timerMs);
  modeSet(typeof location!=='undefined'&&location.hash==='#demo'?'demo':'live');
- return {load,render,reveal,selectSport:switchSport,setMode:modeSet,getState:()=>({sport,catalog,selectedId,visible,pending,mode}),dispose(){disposed=true;clearInterval(loop);activeFetch++;}};
+ return {load,render,reveal,selectSport:switchSport,setMode:modeSet,getState:()=>({sport,catalog,selectedId,visible,pending,mode}),dispose(){disposed=true;clearInterval(loop);activeFetch++;if(typeof window!=='undefined')window.removeEventListener('hashchange',onHashChange);}};
 }
 if(typeof document!=='undefined'){
  const boot=()=>{window.SyncPulseLiveCenter=mountLiveCenter();};
