@@ -13,6 +13,7 @@
  */
 
 import http from 'node:http';
+import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -39,9 +40,9 @@ const ROOT_DIR = path.join(__dirname, '..', '..');
 
 const INITIAL_LIVE_SCENARIO = {
   id: 'live_broadcast_stream',
-  title: 'LIVE TELEMETRY: MUM vs CHE (Wankhede Broadcast Feed)',
+  title: 'SIMULATED TELEMETRY: MUM vs CHE (Wankhede Demo Feed)',
   teams: { batting: 'MUM', bowling: 'CHE' },
-  venue: 'Wankhede Stadium, Mumbai (Live Telemetry Channel)',
+  venue: 'Wankhede Stadium, Mumbai (Simulated Telemetry Channel)',
   initialState: {
     scoreRuns: 144,
     scoreWickets: 3,
@@ -60,7 +61,7 @@ const INITIAL_LIVE_SCENARIO = {
 
 export const IND_VS_NZ_LIVE_SCENARIO = {
   id: 'ind_vs_nz_live',
-  title: 'LIVE NOW: IND vs NZ (Eden Park, Auckland • Nov 4, 2026 — Rain-Revised DLS Target 143)',
+  title: 'DEMO REPLAY: IND vs NZ (Illustrative Nov 4, 2026 score snapshot; not connected to live feed)',
   teams: { batting: 'IND', bowling: 'NZ' },
   venue: 'Eden Park, Auckland (1st ODI • NZ 185/10 in 40.2 ov • DLS Chase)',
   initialState: {
@@ -263,7 +264,7 @@ export function createLiveTelemetrySession() {
       ? `EXTRA (${extraType.toUpperCase()}) at ${latestVis.overBallLabel} by ${newEvent.bowler} (+${runsBat + runsExtra} run${updatedState.freeHitActive ? ', FREE HIT ACTIVE' : ''})`
       : `BALL ${latestVis.overBallLabel}: ${newEvent.bowler} to ${curState.striker} — ${runsBat} run(s) (${updatedState.scoreRuns}/${updatedState.scoreWickets})`;
 
-    const act = recordActivity('LIVE_DELIVERY_INGESTED', desc, nextSeq);
+    const act = recordActivity('SIMULATED_DELIVERY_INGESTED', desc, nextSeq);
 
     return {
       accepted: true,
@@ -329,45 +330,123 @@ export function createLiveTelemetrySession() {
 function readJsonBody(req) {
   return new Promise((resolve, reject) => {
     let body = '';
-    req.on('data', (chunk) => { body += chunk; });
-    req.on('end', () => {
-      try {
-        resolve(body ? JSON.parse(body) : {});
-      } catch (e) {
-        reject(e);
+    let bytes = 0;
+    let failed = false;
+    req.on('data', (chunk) => {
+      bytes += chunk.length;
+      if (bytes > 128 * 1024) {
+        if (!failed) reject(new Error('Request body too large'));
+        failed = true;
+        return;
       }
+      body += chunk;
+    });
+    req.on('end', () => {
+      if (failed) return;
+      try { resolve(body ? JSON.parse(body) : {}); }
+      catch (e) { reject(e); }
     });
     req.on('error', reject);
   });
 }
 
 export function createSyncPulseHttpServer() {
-  const session = createLiveTelemetrySession();
-  const sseClients = new Set();
+  // Each browser owns an independent, ephemeral demo session.
+  // No anonymous visitor can change another browser's match or see its SSE packets.
+  const sessions = new Map();
+  const sseClients = new Map(); // ServerResponse -> session id
+  const SESSION_TTL_MS = 2 * 60 * 60 * 1000;
+  const MAX_SESSIONS = 500;
+  const PUBLIC_ASSETS = new Set([
+    '/', '/index.html',
+    '/src/ai/pulseBriefEngine.mjs',
+    '/src/engine/cricketStateEngine.mjs',
+    '/src/models/networkGraphEngine.mjs',
+    '/src/models/winProbAndMonteCarlo.mjs',
+    '/src/models/model_artifact_v2.json'
+  ]);
 
-  function broadcastSse(eventType, dataObj) {
-    const frame = `event: ${eventType}\ndata: ${JSON.stringify(dataObj)}\n\n`;
-    for (const res of sseClients) {
-      try {
-        res.write(frame);
-      } catch (_e) {
-        sseClients.delete(res);
+  function getSession(req, res) {
+    const cookie = String(req.headers.cookie || '').match(/(?:^|;\s*)sp11_session=([a-f0-9-]{36})(?:;|$)/);
+    let id = cookie?.[1];
+    if (!id || !sessions.has(id)) {
+      const now = Date.now();
+      for (const [key, value] of sessions) {
+        if (now - value.lastSeen > SESSION_TTL_MS && ![...sseClients.values()].includes(key)) {
+          if (value.session.getAutoStreamTimer()) clearInterval(value.session.getAutoStreamTimer());
+          sessions.delete(key);
+        }
       }
+      if (sessions.size >= MAX_SESSIONS) return null;
+      id = randomUUID();
+      sessions.set(id, { session: createLiveTelemetrySession(), lastSeen: now, windowStart: now, posts: 0, aiCalls: 0 });
+      const secure = req.socket.encrypted || req.headers['x-forwarded-proto'] === 'https' ? '; Secure' : '';
+      res.setHeader('Set-Cookie', `sp11_session=${id}; Path=/; HttpOnly; SameSite=Strict; Max-Age=7200${secure}`);
+    }
+    const state = sessions.get(id);
+    state.lastSeen = Date.now();
+    return { id, state, session: state.session };
+  }
+
+  function broadcastSse(sessionId, eventType, dataObj) {
+    const frame = `event: ${eventType}\ndata: ${JSON.stringify(dataObj)}\n\n`;
+    for (const [res, recipientId] of sseClients) {
+      if (recipientId !== sessionId) continue;
+      try { res.write(frame); }
+      catch (_e) { sseClients.delete(res); }
     }
   }
 
   const server = http.createServer(async (req, res) => {
     const urlObj = new URL(req.url || '/', 'http://127.0.0.1');
     const pathname = urlObj.pathname;
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('Cache-Control', 'no-store');
 
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
+    // No wildcard CORS: mutations are same-origin only.
+    const origin = req.headers.origin;
+    if (origin) {
+      let allowed = false;
+      try { allowed = new URL(origin).host === req.headers.host; } catch (_) {}
+      if (!allowed) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Cross-origin requests are not permitted' }));
+        return;
+      }
+    }
     if (req.method === 'OPTIONS') {
       res.writeHead(204);
       res.end();
       return;
+    }
+    const current = getSession(req, res);
+    if (!current) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Demo session capacity reached' }));
+      return;
+    }
+    const { id: sessionId, state: clientState, session } = current;
+    if (req.method === 'POST') {
+      const now = Date.now();
+      if (now - clientState.windowStart > 60000) {
+        clientState.windowStart = now;
+        clientState.posts = 0;
+        clientState.aiCalls = 0;
+      }
+      clientState.posts++;
+      if (pathname === '/api/ai/grok') clientState.aiCalls++;
+      if (clientState.posts > 100 || clientState.aiCalls > 5) {
+        res.writeHead(429, { 'Content-Type': 'application/json', 'Retry-After': '60' });
+        res.end(JSON.stringify({ error: 'Demo request rate limit reached' }));
+        return;
+      }
+      if (!String(req.headers['content-type'] || '').toLowerCase().includes('application/json')) {
+        res.writeHead(415, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Expected application/json' }));
+        return;
+      }
     }
 
     // 0. Health & Model Metadata Endpoint
@@ -379,7 +458,9 @@ export function createSyncPulseHttpServer() {
         modelId: MODEL_ARTIFACT.modelId,
         heldOutMetrics: MODEL_ARTIFACT.heldOutMetrics,
         connectedSseClients: sseClients.size,
-        grokEnvConfigured: Boolean(process.env.XAI_API_KEY || process.env.GROK_API_KEY)
+        grokEnvConfigured: false,
+        modelEvaluationSource: 'SYNTHETIC_MATCH_SIMULATION',
+        demoMode: true
       }));
       return;
     }
@@ -397,7 +478,7 @@ export function createSyncPulseHttpServer() {
         activityFeed: session.getActivityFeed(),
         connectedClients: sseClients.size + 1
       })}\n\n`);
-      sseClients.add(res);
+      sseClients.set(res, sessionId);
       req.on('close', () => {
         sseClients.delete(res);
       });
@@ -424,7 +505,7 @@ export function createSyncPulseHttpServer() {
         const outcome = payload.mode === 'AUTO_CRICSHEET'
           ? session.stepAutonomousCricsheetDelivery()
           : session.ingestLiveDelivery(payload);
-        broadcastSse('delivery', {
+        broadcastSse(sessionId, 'delivery', {
           outcome,
           scenario: session.getScenario(),
           terminalState: session.getTerminalState(),
@@ -452,7 +533,7 @@ export function createSyncPulseHttpServer() {
           const intervalMs = Math.max(800, Math.min(10000, Number(payload.intervalMs) || 2500));
           const timer = setInterval(() => {
             const out = session.stepAutonomousCricsheetDelivery();
-            broadcastSse('delivery', {
+            broadcastSse(sessionId, 'delivery', {
               outcome: out,
               scenario: session.getScenario(),
               terminalState: session.getTerminalState(),
@@ -482,10 +563,15 @@ export function createSyncPulseHttpServer() {
         session.setAutoStreamTimer(null);
       }
       let payload = {};
-      try { payload = await readJsonBody(req); } catch (_e) {}
+      try { payload = await readJsonBody(req); }
+      catch (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+        return;
+      }
       const targetTemplate = payload.matchId === 'ind_vs_nz_live' ? IND_VS_NZ_LIVE_SCENARIO : INITIAL_LIVE_SCENARIO;
       const snap = session.resetLiveMatch(targetTemplate);
-      broadcastSse('reset', snap);
+      broadcastSse(sessionId, 'reset', snap);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(snap));
       return;
@@ -499,13 +585,13 @@ export function createSyncPulseHttpServer() {
         matches: [
           {
             id: 'ind_vs_nz_live',
-            label: '🇮🇳 IND vs 🇳🇿 NZ — 1st ODI, Eden Park, Auckland (LIVE • Nov 4, 2026)',
-            status: 'LIVE • Rain-Revised DLS Target 143 • IND 118/2 (16.4 ov) • V. Kohli 51* (36)',
+            label: '🇮🇳 IND vs 🇳🇿 NZ — Illustrative 2026 Replay (Not Live)',
+            status: 'DEMO REPLAY • Unverified score example • Not a live provider feed',
             scenario: IND_VS_NZ_LIVE_SCENARIO
           },
           {
             id: 'live_broadcast_stream',
-            label: '📡 MUM vs CHE — Wankhede Death-Over Telemetry Feed',
+            label: '📡 MUM vs CHE — Simulated Wankhede Death-Over Feed',
             status: 'LIVE SIM • MUM 144/3 (15.0 ov) chasing 196',
             scenario: INITIAL_LIVE_SCENARIO
           }
@@ -542,7 +628,7 @@ export function createSyncPulseHttpServer() {
     if (pathname === '/api/ai/grok' && req.method === 'POST') {
       try {
         const payload = await readJsonBody(req);
-        const apiKey = (payload.apiKey || process.env.XAI_API_KEY || process.env.GROK_API_KEY || '').trim();
+        const apiKey = (payload.apiKey || '').trim(); // Never spend a server-wide paid key on anonymous public traffic.
         const model = payload.model || 'grok-3-mini';
         const briefMode = payload.briefMode || 'JUST_JOINED';
         const persona = payload.persona || 'ANALYST';
@@ -665,8 +751,8 @@ export function createSyncPulseHttpServer() {
 
     // 8. Serve Static Files (index.html, src/*, etc.)
     const relPath = pathname === '/' ? 'index.html' : pathname.slice(1);
-    const safePath = path.normalize(path.join(ROOT_DIR, relPath));
-    if (!safePath.startsWith(ROOT_DIR) || !fs.existsSync(safePath) || fs.statSync(safePath).isDirectory()) {
+    const safePath = path.resolve(ROOT_DIR, relPath);
+    if (!PUBLIC_ASSETS.has(pathname) || !fs.existsSync(safePath) || fs.statSync(safePath).isDirectory()) {
       res.writeHead(404, { 'Content-Type': 'text/plain' });
       res.end('Not found');
       return;
@@ -677,7 +763,7 @@ export function createSyncPulseHttpServer() {
     res.end(fs.readFileSync(safePath));
   });
 
-  return { server, session };
+  return { server, get session() { return sessions.values().next().value?.session || null; } };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
@@ -686,7 +772,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const { server } = createSyncPulseHttpServer();
   server.listen(port, host, () => {
     console.log('========================================================================');
-    console.log(`⚡ SYNCPULSE11 V5.0 FULL-STACK SERVER RUNNING ON http://localhost:${port}`);
+    console.log(`⚡ SYNCPULSE11 V5.5 HARDENED DEMO SERVER RUNNING ON http://localhost:${port}`);
     console.log(`📡 SSE Live Stream:  http://localhost:${port}/api/live/stream`);
     console.log(`🤖 xAI Grok Proxy:   POST http://localhost:${port}/api/ai/grok`);
     console.log(`📈 Quant Engine API: POST http://localhost:${port}/api/quant/evaluate`);

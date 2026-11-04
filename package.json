@@ -4,7 +4,7 @@
   "description": "SyncPulse11 V5.5: The Spoiler-Safe AI Cricket Co-Pilot, Dynamic NetworkX Graph Topology, 12-Feature Isotonic Quant Engine & Live Telemetry Hub",
   "type": "module",
   "scripts": {
-    "test": "node tests/test_syncpulse11.mjs && node tests/e2e_dom_verify.mjs",
+    "test": "node tests/test_syncpulse11.mjs && node tests/e2e_dom_verify.mjs && node tests/security_http_verify.mjs",
     "test:unit": "node tests/test_syncpulse11.mjs",
     "test:e2e": "node tests/e2e_dom_verify.mjs",
     "train": "node scripts/train_and_calibrate_wp.mjs",

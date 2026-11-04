@@ -95,6 +95,7 @@
   </style>
 </head>
 <body class="min-h-screen flex flex-col selection:bg-violet-500/30 selection:text-violet-200">
+  <div role="status" class="w-full bg-amber-950/70 border-b border-amber-500/30 text-amber-100 text-xs text-center px-4 py-2">DEMO MODE: Match scores and event streams are scripted or simulated, not a verified live sports feed. Win probability metrics are evaluated on synthetic simulated chases, not held-out historical IPL matches.</div>
 
   <!-- TOP STARTUP NAVIGATION & MULTI-ENGINE WORKSPACE BAR -->
   <header class="sticky top-0 z-30 bg-[#07090F]/95 backdrop-blur-md border-b border-slate-800/80 px-4 py-2.5">
@@ -108,8 +109,8 @@
           <div>
             <div class="flex items-center gap-2 flex-wrap">
               <h1 class="text-base font-extrabold tracking-tight text-white">SyncPulse11 <span class="text-violet-400 font-mono-tabular text-xs font-bold">V5.5</span></h1>
-              <span class="text-[11px] font-mono-tabular px-2 py-0.5 rounded-md bg-sky-500/15 text-sky-300 border border-sky-500/30" title="Trained on 6,240 Cricsheet T20 chases (676,846 balls; 191,953 train / 31,337 held-out 2024-2026 states).">
-                12-Feat Isotonic • 6,240 Chases (Brier 0.1196 • AUC 0.9106 • ECE 1.42%)
+              <span class="text-[11px] font-mono-tabular px-2 py-0.5 rounded-md bg-sky-500/15 text-sky-300 border border-sky-500/30" title="Synthetic simulation of 6,240 chases; held-out performance reflects simulated data, not historical matches.">
+                12-Feat Model • Synthetic Validation (Brier 0.1196 • AUC 0.9106)
               </span>
             </div>
             <p class="text-[11px] text-slate-400 hidden sm:block">Spoiler-Safe Real-Time Cricket Intelligence & xAI Grok Co-Pilot</p>
@@ -182,7 +183,7 @@
         <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 mr-1">Match Feed:</span>
         <button type="button" data-scenario="ind_vs_nz_live" class="scenario-btn focus-ring text-xs font-bold px-2.5 py-1.5 rounded-md border transition flex items-center gap-1.5">
           <span class="w-2 h-2 rounded-full bg-rose-400 live-beacon"></span>
-          🔴 LIVE: IND vs NZ (Eden Park • 16.4)
+          ▶ DEMO REPLAY: IND vs NZ
         </button>
         <button type="button" data-scenario="death_chase" class="scenario-btn focus-ring text-xs font-medium px-2.5 py-1.5 rounded-md border transition">
           1. Death-Over Chase (16.4)
@@ -239,7 +240,7 @@
         </div>
         <div class="flex items-center gap-2 flex-wrap">
           <button id="btnSyncIndVsNzLive" type="button" class="focus-ring text-xs font-extrabold px-3 py-1.5 rounded-lg bg-rose-500 hover:bg-rose-400 text-white transition flex items-center gap-1.5 shadow-sm">
-            🇮🇳 Sync LIVE: IND vs NZ (Eden Park)
+            🇮🇳 Open IND vs NZ Demo Replay
           </button>
           <button id="btnActivateLiveStreamMode" type="button" class="focus-ring text-xs font-bold px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition">
             📡 Switch to Live Broadcast Stream
@@ -688,7 +689,7 @@
                 12-Feature Isotonic Win Prob & Rollouts
               </h3>
             </div>
-            <span class="text-[11px] font-mono-tabular px-2 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/30" title="Trained on 6,240 Cricsheet T20 (2008-2026) chases (191,953 train / 31,337 held-out 2024-2026 states; Brier 0.1196, AUC 0.9106, ECE 1.42%).">
+            <span class="text-[11px] font-mono-tabular px-2 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/30" title="Simulated 6,240 T20 chases; Brier 0.1196 and AUC 0.9106 evaluated on synthetic holdout, not historical match records.">
               Brier: 0.1196 • AUC: 0.9106 • ECE: 1.42%
             </span>
           </div>
@@ -2597,7 +2598,7 @@
         },
         ind_vs_nz_live: {
           id: 'ind_vs_nz_live',
-          title: '🔴 LIVE NOW: IND vs NZ (1st ODI • Eden Park, Auckland — Nov 4, 2026)',
+          title: 'DEMO REPLAY: IND vs NZ (Illustrative 2026 scenario, not live)',
           teams: { batting: 'IND', bowling: 'NZ' },
           venue: 'Eden Park, Auckland (NZ 185/10 in 40.2 ov • Rain-Revised DLS Target 143)',
           initialState: {

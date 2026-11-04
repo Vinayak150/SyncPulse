@@ -1,11 +1,11 @@
 {
   "modelId": "sp11-cricsheet-t20-12feat-isotonic-v5.0",
   "trainedAt": "2026-11-04T14:05:00+05:30",
-  "trainingCorpus": "Cricsheet Global T20 & IPL 2008–2026 empirical phase×wicket transition & era-adjusted corpus (6,240 chases, 676,846 legal balls; 5,360 train / 880 held-out modern 2024–2026 chases; h=0.75 season recency half-life; realized chase win rate 50.0%)",
+  "trainingCorpus": "SYNTHETIC: 6,240 simulated T20 chases generated using hand-specified phase and wicket transition assumptions; 5,360 training and 880 synthetic hold-out matches. No historical Cricsheet JSON was read by this training run.",
   "dataProvenance": {
-    "primarySource": "Cricsheet.org Open T20 & IPL Archive (ODC-BY 1.0, 2008–2026, 6,240 second-innings chases across IPL, BBL, SA20, T20 Blast, CPL & Men's T20I)",
-    "phaseDotRateBenchmark": "CricketTaken Cricsheet Archive (2026 Powerplay 41.4% dot, Middle 28.4% dot, Death 29.1% dot; 2026 Run Rate 9.85 RPO)",
-    "calibrationBenchmarkPaper": "arXiv:2608.14696v1 (1,162 IPL chases, 130,029 legal deliveries; 2024–2026 scoring drift 1.598 runs/ball; engineered logistic Brier benchmark 0.1350)"
+    "primarySource": "Seeded synthetic match simulation from scripts/train_and_calibrate_wp.mjs; no direct historical Cricsheet match ingestion",
+    "phaseDotRateBenchmark": "Phase and wicket probability assumptions manually encoded in trainer; not fitted directly to raw IPL deliveries",
+    "calibrationBenchmarkPaper": "Not independently benchmarked against historical match records"
   },
   "trainSamplesCount": 191953,
   "heldOutSamplesCount": 31337,
@@ -241,5 +241,6 @@
       "observedWinRatePct": 93.8,
       "absCalibrationGapPct": 2.3
     }
-  ]
+  ],
+  "evaluationDisclosure": "Brier, AUC and ECE are computed on a simulated holdout generated from the same synthetic mechanism, not real-world out-of-sample historical validation."
 }

@@ -1,64 +1,76 @@
-# SyncPulse11 V5.5 — The Spoiler-Safe AI Cricket Co-Pilot
+# SyncPulse11 V5.5 | Spoiler-Safe AI Cricket Co-Pilot
 
-> **Stay in sync. Understand every ball. Never lose the moment.**
-> **Startup-Grade Full-Stack Multi-Engine Architecture • Dynamic NetworkX Graph Topology • 12-Feature Isotonic Quant Engine • xAI Grok Co-Pilot • Live IND vs NZ Telemetry**
+> Stay in sync. Understand every ball. Never lose the moment.
 
----
+**Dream11 Forward Deployed Engineer internship artifact.** Live cricket viewers watching a delayed OTT stream can see outcomes spoiled by second-screen scoreboards and alerts. SyncPulse11's viewer cursor reveals only the events the fan has watched, while the incoming match-event cursor can continue to advance.
 
-## 1. Quick Start (Full-Stack Server, Zero-Setup Browser & 72-Check Verification)
+## 60-second product tour
 
-### A. Run the Full-Stack Production Server (`http://localhost:4111`)
-```bash
-cd /Users/vinayakmahindrakar/Desktop/dream11
-npm run start:live
-```
-Open **`http://localhost:4111`** in your browser. This launches the complete end-to-end stack:
-- **`GET /`** — Serves the multi-engine web application (`index.html`)
-- **`GET /api/health`** — Returns live system health, model ID (`sp11-cricsheet-t20-12feat-isotonic-v5.0`), and calibration metrics
-- **`GET /api/live/matches`** — Returns featured live match discovery including **`🇮🇳 IND vs 🇳🇿 NZ (1st ODI, Eden Park, Auckland • Nov 4, 2026 — DLS Target 143)`**
-- **`GET /api/live/stream`** — Real-time Server-Sent Events (SSE) broadcaster pushing live stadium deliveries to connected clients
-- **`POST /api/live/delivery`** — Live Scorer Pad & webhook ingestion endpoint
-- **`POST /api/quant/evaluate`** — Backend 12-feature calibrated Win Probability, 1,000-rollout Monte Carlo, 8-outcome What-If, DLS Par, and **NetworkX Dynamic Graph Topology** (`MARKOV_STATE_FLOW` & `TACTICAL_ENTITY_GRAPH`) API
-- **`POST /api/ai/grok`** — Spoiler-guarded **xAI Grok (`api.x.ai/v1/chat/completions`)** Co-Pilot proxy with automatic offline grounded fallback
+1. Open the app and start the **Death-Over Chase** demo.
+2. Use **Manual Sync** to stay behind a stadium delivery. The shield keeps the scoreboard, analysis, AI briefs, and predictions on the visible prefix.
+3. Use **PulseBrief** to catch up in Analyst, Hinglish or Silent mode.
+4. Lock **Captain's Call** before revealing its target ball; the result remains pending until the fan catches up.
+5. Explore the optional Quant, Network Graph, and System Proof workspaces.
 
-### B. Run the 48-Test Automated Node Verification Suite (`34/34` Unit/Fuzzing + `14/14` End-to-End DOM Flows)
+All included match scenarios are **illustrative, scripted or simulated**. IND vs NZ is a **demo replay**, not a connected real-time feed. The scorer pad and autonomous broadcaster generate **simulated** deliveries; they are not an official live data supplier.
+
+## Run locally
+
+Requires Node.js 20+.
+
 ```bash
 npm test
+npm run start:live
 ```
-*(In addition, `index.html` executes `24/24` in-browser self-tests on boot for `72/72` total automated checks.)*
 
-### C. Retrain the 12-Feature + 21-Knot PAVA Isotonic Model (`6,240` Cricsheet T20 Chases)
+Open `http://localhost:4111` or set `PORT` to change the port. Core features work without external API keys. Note: the page loads Tailwind and font resources from CDNs when online, although its core deterministic engines do not require a paid AI API.
+
+## Model provenance and limitations
+
+The win-probability model has 12 engineered features, calibrated on a **synthetic T20 match simulator**. `scripts/train_and_calibrate_wp.mjs` generates 6,240 chases with seeded, manually specified phase/wicket transition probabilities. It **does not train on the bundled Cricsheet archive**. Reported Brier 0.1196, AUC 0.9106 and ECE 1.42% evaluate a *simulated held-out set* from this simulator; they are **not historical IPL out-of-sample scores**. They should not be compared to real-world research benchmarks. The Cricsheet data archive is excluded from Git. Simulations and model outputs are illustrative, not betting advice.
+
+The deterministic offline briefing engine creates structured evidence-backed text; it is not a generative LLM. The Grok endpoint can optionally rewrite the viewer-visible briefing when a visitor explicitly supplies their own xAI API key. The server does not use global paid-provider keys for anonymous visitors. No paid model is required for the submission demonstration. DLS estimates and field diagrams are educational approximations, not official match technology. The NetworkX-style SVG visual is a hand-implemented graph, not a claim of Python NetworkX runtime dependency.
+
+## Architecture
+
+```text
+Curated/simulated event input
+   -> cricket state transition + event log
+   -> viewer cursor projection (strict visible prefix)
+   -> win-probability, Monte Carlo, graphs and explanations
+   -> fan UI + spoiler-gated interactions
+
+Node HTTP server -> session-specific scorer + SSE feed
+                 -> per-session rate limits and restricted static assets
+```
+
+- `index.html`: self-contained browser UX and offline demo.
+- `src/engine/cricketStateEngine.mjs`: match state, legal deliveries, striker changes and spoiler-safe projections.
+- `src/models/winProbAndMonteCarlo.mjs`: estimated chase probabilities and seeded simulation.
+- `src/models/networkGraphEngine.mjs`: Markov and tactical-entity visualization models.
+- `src/ai/pulseBriefEngine.mjs`: evidence-grounded briefing.
+- `src/server/liveTelemetryServer.mjs`: HTTP, isolated demo sessions, scorer, SSE, optional xAI proxy.
+- `tests/`: unit, DOM and HTTP-security verification.
+
+The public server only serves allowlisted frontend assets, not `.git`, raw archives or source files outside the allowlist. Demo SSE and match mutation state are isolated per browser session using an HttpOnly cookie. Sessions are ephemeral; they can reset after instance restart or Render free-plan sleep. Rate limits are basic per-session controls, not a substitute for authentication, distributed abuse prevention or production persistence.
+
+## Tests
+
 ```bash
-npm run train
+npm test
+npm run test:unit
+npm run test:e2e
+node tests/security_http_verify.mjs
 ```
 
----
+The test suite includes 34 unit/property checks, 14 scripted DOM user flows and 20 HTTP security assertions. The DOM harness runs 24 embedded browser-like self-tests, but it is **not a substitute for real Chrome/Safari/mobile acceptance testing**.
 
-## 2. Multi-Engine Startup Workspace Navigation & NetworkX Dynamic Graph UI
+## Deployment
 
-SyncPulse11 V5.5 organizes its core engines into 6 dedicated, clutter-free workspaces accessible from the top navigation bar:
+`render.yaml` deploys a Node web service (free plan, `npm test` build, `npm run start:live` start), with GitHub auto-deploy. Render free instances may sleep during inactivity and lose process-local demo state. First hit after sleep may take longer than a normal page request. Keep `XAI_API_KEY` unset. For long-term production use, add durable match storage, proper authenticating operators, trusted event ingestion, horizontal coordination, and comprehensive provider-based real-world model evaluation.
 
-| Engine Workspace | Semantic Domain | Capabilities |
-| :--- | :--- | :--- |
-| **⊞ Split Studio** | Unified Broadcast View | Side-by-side 2-column command studio with 4 progressive disclosure sub-tabs (`📈 Trajectory`, `🔮 What-If (8)`, `🧬 12-Feat`, `🕸️ NetworkX`) |
-| **🛡️ 1. SyncShield** | **Emerald** (`#10B981`) | Dual-cursor spoiler isolation (`stadiumHead` vs `viewerCursor`), FNV-1a cryptographic proof, and **Captain's Call** spoiler-gated challenge |
-| **🧠 2. PulseBrief + Grok** | **Violet** (`#8B5CF6`) | **xAI Grok Co-Pilot** (`grok-3-mini` / `grok-3` / `grok-2-latest`) + interactive **Ask Grok** tactical bar, 4 briefing modes, 3 personas, 2D Field Radar, Pitchside Empirical Bayes matchups, and DLS Par calculator |
-| **📈 3. Quant Engine** | **Sky / Cyan** (`#0EA5E9`) | Full-width quantitative dashboard expanding Trajectory & 1,000 Monte Carlo rollouts, 8-outcome Next-Ball What-If matrix, 12-feature Log-Odds Shapley waterfall, and **Dynamic NetworkX Graph Topology** simultaneously |
-| **📡 4. Live Stream** | **Rose** (`#F43F5E`) | 1-click **🇮🇳 Sync LIVE: IND vs NZ (Eden Park)**, Live Scorer Pad (`0`, `1`, `2`, `4`, `6`, `W`, `Wide`, `No-Ball`), multi-tab `BroadcastChannel` sync, SSE stream, and autonomous match daemon |
-| **🔬 5. System Proof** | **Indigo** (`#6366F1`) | Counterfactual World A vs World B noninterference inspector, 10-bin reliability diagram, 100k-fan shared-compute benchmark, and 24 in-browser verification tests |
+Endpoints: `GET /`, `GET /api/health`, `GET /api/live/matches`, `GET /api/live/stream`, `GET /api/live/state`, `POST /api/live/delivery`, `POST /api/live/autostream`, `POST /api/live/reset`, `POST /api/quant/evaluate`, and `POST /api/ai/grok`.
 
-### Dynamic NetworkX Graph Topology (`src/models/networkGraphEngine.mjs`)
-- **Mode 1 (`MARKOV_STATE_FLOW`):** Models the current viewer-safe match state $S_t$ branching across 8 animated directed edges (`0`, `+1`, `+2`, `+4`, `+6`, `Wicket`, `Wide`, `No-Ball`) into 3 Over-Horizon Attractor Basins (`Chase Surge`, `Par Equilibrium`, `Bowling Squeeze`).
-- **Mode 2 (`TACTICAL_ENTITY_GRAPH`):** Builds an 8-node, 12-edge directed interaction graph across `Bowler`, `Blockhole/Full`, `Hard Length/Spin`, `Slot/Hitting Arc`, `Active Striker*`, `Non-Striker Partner`, `Inner 30yd Ring`, and `Boundary Riders`, computing **20-Iteration Power-Method PageRank Centrality ($\alpha=0.85$)** and **Shannon Transition Entropy ($H$ in bits)**.
+## Submission
 
----
-
-## 3. Quantitative Model Architecture (`sp11-cricsheet-t20-12feat-isotonic-v5.0`)
-
-Trained via `scripts/train_and_calibrate_wp.mjs` on **6,240 Cricsheet Men's T20 & IPL second-innings chases** (`676,846` legal deliveries; `191,953` training states and `31,337` held-out modern 2024–2026 states):
-
-- **Held-Out Evaluation Metrics (`31,337` Held-Out Modern 2024–2026 States):**
-  - **Brier Score:** **`0.1196`** (beats the `0.2500` null baseline by `52.2%` and the `arXiv:2608.14696` benchmark of `0.1350`)
-  - **Log-Loss:** **`0.3820`**
-  - **ROC-AUC:** **`0.9106`**
-  - **Expected Calibration Error (ECE):** **`1.42%`** across 10 decile bins (`21` PAVA Isotonic knots)
+See `SUBMISSION_NOTE_AND_DEMO_SCRIPT.md` for a short (under 200 words) note and a spoiler-safe, two-minute reviewer walkthrough. The app has no Dream11 affiliation and no official sports data feed.
