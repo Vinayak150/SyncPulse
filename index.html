@@ -110,7 +110,7 @@
             <div class="flex items-center gap-2 flex-wrap">
               <h1 class="text-base font-extrabold tracking-tight text-white">SyncPulse11 <span class="text-violet-400 font-mono-tabular text-xs font-bold">V5.5</span></h1>
               <span class="text-[11px] font-mono-tabular px-2 py-0.5 rounded-md bg-sky-500/15 text-sky-300 border border-sky-500/30" title="Synthetic simulation of 6,240 chases; held-out performance reflects simulated data, not historical matches.">
-                12-Feat Model • Synthetic Validation (Brier 0.1196 • AUC 0.9106)
+                Spoiler-safe • Simulated match intelligence
               </span>
             </div>
             <p class="text-[11px] text-slate-400 hidden sm:block">Spoiler-Safe Real-Time Cricket Intelligence & xAI Grok Co-Pilot</p>
@@ -134,7 +134,7 @@
         </button>
         <button id="btnToggleLiveHub" type="button" data-enginepage="TELEMETRY" class="engine-page-btn focus-ring text-xs font-medium px-2.5 py-1.5 rounded-lg transition whitespace-nowrap flex items-center gap-1.5" title="Switch to Live Broadcast Telemetry & Scorer Engine">
           <span class="w-2 h-2 rounded-full bg-rose-400 live-beacon"></span>
-          📡 4. Live Stream (<span id="lblLiveHubStatus">Ready</span>)
+          📡 4. Demo Stream (<span id="lblLiveHubStatus">Ready</span>)
         </button>
         <button id="btnToggleEngLab" type="button" data-enginepage="SYSTEM" class="engine-page-btn focus-ring text-xs font-medium px-2.5 py-1.5 rounded-lg transition whitespace-nowrap">
           🔬 5. System Proof
@@ -183,7 +183,7 @@
       <div class="flex items-center gap-1.5 flex-wrap">
         <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 mr-1">Match Feed:</span>
         <button type="button" data-scenario="ind_vs_nz_live" class="scenario-btn focus-ring text-xs font-bold px-2.5 py-1.5 rounded-md border transition flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-rose-400 live-beacon"></span>
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
           ▶ DEMO REPLAY: IND vs NZ
         </button>
         <button type="button" data-scenario="death_chase" class="scenario-btn focus-ring text-xs font-medium px-2.5 py-1.5 rounded-md border transition">
@@ -412,7 +412,7 @@
             <div class="text-lg font-bold font-mono-tabular text-emerald-300 mt-0.5" id="lblViewerCursorOver">16.4</div>
             <div class="text-[11px] text-slate-300 mt-0.5" id="lblViewerCursorSub">Last ball observed • All fan insights stop here</div>
           </div>
-          <span class="text-xs font-mono-tabular px-2 py-1 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300" id="lblViewerDigestBadge" title="FNV-1a cryptographic digest of all fan-facing state">0x00000000</span>
+          <span class="text-xs font-mono-tabular px-2 py-1 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300" id="lblViewerDigestBadge" title="Non-cryptographic FNV-1a consistency checksum of viewer-visible state">0x00000000</span>
         </div>
       </div>
 
@@ -2859,6 +2859,7 @@
         grokModel: 'grok-3-mini',
         llmRewrittenInsights: null,
         grokCopilotAnswer: null,
+        grokAnswerContextKey: null,
         tourActive: false,
         tourStepIndex: 0
       };
@@ -2871,8 +2872,10 @@
             const msg = ev.data || {};
             if (msg.type === 'LIVE_SCENARIO_UPDATE' && msg.scenario) {
               appState.liveStreamScenario = msg.scenario;
-              appState.activeScenarioId = 'live_broadcast_stream';
-              appState.stadiumHeadSeq = appState.liveStreamScenario.events.length;
+              // Background telemetry must not change the user's selected workspace.
+              if (appState.activeScenarioId === 'live_broadcast_stream') {
+                appState.stadiumHeadSeq = appState.liveStreamScenario.events.length;
+              }
               if (msg.activity) {
                 appState.liveActivityFeed.unshift(msg.activity);
                 if (appState.liveActivityFeed.length > 40) appState.liveActivityFeed.pop();
@@ -3099,6 +3102,12 @@
       // ----------------------------------------------------------------------
       // 6. MASTER RENDER PIPELINE (CONSUMES ONLY getViewerSafeState)
       // ----------------------------------------------------------------------
+      function getCurrentVisibleContextKey() {
+        const s = getActiveScenario();
+        const v = getViewerSafeState(s, appState.viewerCursorSeq);
+        return [v.scenarioId, v.viewerCursorSeq, v.scoreRuns, v.scoreWickets, v.legalBallsBowled, v.freeHitActive, appState.briefMode, appState.persona].join(':');
+      }
+
       function renderApp() {
         const tRenderStart = performance.now();
         recomputeViewerCursorFromMode();
@@ -3296,9 +3305,10 @@
         });
 
         const briefData = generatePulseBrief(safeState, appState.briefMode, appState.persona);
-        const insightsToRender = appState.llmRewrittenInsights || briefData.insights;
-        document.getElementById('lblBriefEngineBadge').textContent = appState.llmRewrittenInsights
-          ? 'Live Gemini Rewrite (Sanitized State Only)'
+        const useGroundedRewrite = Boolean(appState.llmRewrittenInsights && appState.grokAnswerContextKey === getCurrentVisibleContextKey());
+        const insightsToRender = useGroundedRewrite ? appState.llmRewrittenInsights : briefData.insights;
+        document.getElementById('lblBriefEngineBadge').textContent = useGroundedRewrite
+          ? 'Optional xAI rewrite (visible state only)'
           : briefData.engineLabel;
 
         const briefContainer = document.getElementById('pulseBriefList');
@@ -3589,7 +3599,7 @@
 
         const grokCard = document.getElementById('grokCopilotResponseCard');
         if (grokCard) {
-          if (appState.grokCopilotAnswer) {
+          if (appState.grokCopilotAnswer && appState.grokAnswerContextKey === getCurrentVisibleContextKey()) {
             grokCard.classList.remove('hidden');
             document.getElementById('lblGrokCopilotCursor').textContent = 'Synced ≤ ' + safeState.oversFormatted + ' ov';
             document.getElementById('txtGrokCopilotAnswer').textContent = appState.grokCopilotAnswer;
@@ -4834,9 +4844,15 @@
           showToast(k ? ('⚡ xAI Grok (' + appState.grokModel + ') key active in session!') : 'Using Offline Grounded Mode.');
         });
 
+        let grokRequestSerial = 0;
         async function invokeGrokCopilot(userQuestionOpt) {
+          const requestSerial = ++grokRequestSerial;
           const scenario = getActiveScenario();
           const safeState = getViewerSafeState(scenario, appState.viewerCursorSeq);
+          const visibleContextKey = getCurrentVisibleContextKey();
+          const isCurrentRequest = function () {
+            return requestSerial === grokRequestSerial && getCurrentVisibleContextKey() === visibleContextKey;
+          };
           const baseBrief = generatePulseBrief(safeState, appState.briefMode, appState.persona);
           const wpSeries = computeWinProbabilitySeries(safeState, scenario.initialState);
           const sens = wpSeries.sensitivity;
@@ -4847,6 +4863,7 @@
             if (q) {
               const topPlan = sens && sens.recommendedBowlingPlan ? sens.recommendedBowlingPlan.name : 'Yorker length';
               const dlsStr = sens && sens.dls ? ('DLS Par is ' + sens.dls.dlsParScore + ' (' + (sens.dls.runsAheadOrBehindPar >= 0 ? '+' : '') + sens.dls.runsAheadOrBehindPar + ' runs).') : '';
+              appState.grokAnswerContextKey = visibleContextKey;
               appState.grokCopilotAnswer =
                 '[Deterministic Grounded Co-Pilot • Visible ≤ ' + safeState.oversFormatted + ' ov]: At ' +
                 safeState.scoreRuns + '/' + safeState.scoreWickets + ' (need ' + safeState.runsRequired + ' off ' + safeState.legalBallsRemaining +
@@ -4883,10 +4900,12 @@
                 });
                 if (proxyResp.ok) {
                   const pData = await proxyResp.json();
+                  if (!isCurrentRequest()) return;
                   if (pData && pData.provider === 'XAI_GROK_LIVE') {
                     if (Array.isArray(pData.insights)) appState.llmRewrittenInsights = pData.insights;
                     if (pData.copilotAnswer) appState.grokCopilotAnswer = pData.copilotAnswer;
                     handledByBackend = true;
+                    appState.grokAnswerContextKey = visibleContextKey;
                     renderApp();
                     showToast('⚡ Updated via live xAI Grok (' + appState.grokModel + ')!');
                   }
@@ -4918,6 +4937,7 @@
             });
             if (!resp.ok) throw new Error('HTTP ' + resp.status);
             const data = await resp.json();
+            if (!isCurrentRequest()) return;
             const rawText = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
             const objMatch = rawText.match(/\{[\s\S]*\}/);
             const arrMatch = rawText.match(/\[[\s\S]*\]/);
@@ -4937,9 +4957,11 @@
             } else if (rawText.trim()) {
               appState.grokCopilotAnswer = rawText.trim();
             }
+            appState.grokAnswerContextKey = visibleContextKey;
             renderApp();
             showToast('⚡ Updated via live xAI Grok API (strictly spoiler-isolated)!');
           } catch (_err) {
+            if (!isCurrentRequest()) return;
             appState.llmRewrittenInsights = null;
             renderApp();
             showToast('xAI Grok request failed or invalid key — gracefully fell back to Offline Grounded Synthesis.');
@@ -5110,7 +5132,7 @@
               }
             } catch (_e) {
               stepAutonomousLiveDelivery();
-              showToast('External API unreachable — stepped autonomous Cricsheet live ball instead.');
+              showToast('External API unavailable — generated one simulated demo delivery instead.');
             }
           });
         }
@@ -5119,27 +5141,36 @@
         try {
           if (typeof EventSource !== 'undefined' && window.location && window.location.protocol.indexOf('http') === 0) {
             const es = new EventSource('/api/live/stream');
+            // A new SSE connection (including a reconnect after sleep) must hydrate
+            // the current session state, without hijacking the user's active workspace.
+            function applySseSnapshot(data) {
+              if (!data || !data.scenario || !Array.isArray(data.scenario.events)) return;
+              const wasLive = appState.activeScenarioId === 'live_broadcast_stream';
+              appState.liveStreamScenario = data.scenario;
+              if (Array.isArray(data.activityFeed)) appState.liveActivityFeed = data.activityFeed;
+              if (wasLive) {
+                appState.stadiumHeadSeq = data.scenario.events.length;
+                renderApp();
+              }
+            }
+            es.addEventListener('open', function () {
+              appState.sseConnected = true;
+              const badge = document.getElementById('lblLiveTransportBadge');
+              if (badge) badge.textContent = 'Connected to demo telemetry (SSE + BroadcastChannel)';
+            });
+            es.addEventListener('error', function () {
+              appState.sseConnected = false;
+              const badge = document.getElementById('lblLiveTransportBadge');
+              if (badge) badge.textContent = 'Reconnecting demo telemetry… Local simulation remains available';
+            });
             es.addEventListener('snapshot', function (ev) {
-              try {
-                const data = JSON.parse(ev.data);
-                if (data && data.scenario) {
-                  appState.sseConnected = true;
-                  const badge = document.getElementById('lblLiveTransportBadge');
-                  if (badge) badge.textContent = 'Connected to Node SSE Server (/api/live/stream) + BroadcastChannel';
-                }
-              } catch (_e) {}
+              try { applySseSnapshot(JSON.parse(ev.data)); } catch (_e) {}
+            });
+            es.addEventListener('reset', function (ev) {
+              try { applySseSnapshot(JSON.parse(ev.data)); } catch (_e) {}
             });
             es.addEventListener('delivery', function (ev) {
-              try {
-                const data = JSON.parse(ev.data);
-                if (data && data.scenario) {
-                  appState.liveStreamScenario = data.scenario;
-                  appState.activeScenarioId = 'live_broadcast_stream';
-                  appState.stadiumHeadSeq = data.scenario.events.length;
-                  if (Array.isArray(data.activityFeed)) appState.liveActivityFeed = data.activityFeed;
-                  renderApp();
-                }
-              } catch (_e) {}
+              try { applySseSnapshot(JSON.parse(ev.data)); } catch (_e) {}
             });
           }
         } catch (_e) {}
@@ -5205,8 +5236,8 @@
   </script>
 <style>
   #fanFocusPanel[hidden] { display: none !important; }
-  #fanFocusPanel { position:fixed; inset:0; z-index:90; display:flex; align-items:center; justify-content:center; padding:18px; background:rgba(2,6,15,.80); backdrop-filter:blur(8px); }
-  .ff-dialog { width:min(100%,600px); max-height:90vh; overflow:auto; background:#111827; color:#f1f5f9; border:1px solid #475569; border-radius:20px; box-shadow:0 22px 85px #000b; padding:24px; }
+  #fanFocusPanel { position:fixed; inset:0; z-index:90; display:flex; align-items:center; justify-content:center; padding:18px; background:rgba(2,6,15,.80); backdrop-filter:blur(8px); overscroll-behavior:contain; }
+  .ff-dialog { width:min(100%,600px); max-height:min(90vh,800px); overflow:auto; background:linear-gradient(160deg,#182233 0%,#101927 65%,#111827 100%); color:#f1f5f9; border:1px solid #475569; border-radius:20px; box-shadow:0 22px 85px #000b; padding:24px; scrollbar-color:#64748b #111827; }
   .ff-top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
   .ff-label { color:#fbbf24; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.15em; }
   .ff-title { font-size:23px; font-weight:800; margin:3px 0 5px; color:#f8fafc; }
@@ -5224,7 +5255,8 @@
   .ff-timer { font:700 32px ui-monospace,monospace; letter-spacing:.03em; color:#fbbf24; }
   .ff-events { list-style:none; padding:0; display:grid; gap:7px; margin-top:8px; }
   .ff-events li { padding:9px 11px; border-left:2px solid #fbbf24; background:#1e293b; border-radius:5px; font-size:12px; color:#e2e8f0; }
-  @media(max-width:480px) {.ff-dialog{padding:16px}.ff-title{font-size:20px}.ff-actions{grid-template-columns:1fr}}
+  @media(max-width:480px) {.ff-dialog{padding:16px}.ff-title{font-size:20px}.ff-actions{grid-template-columns:1fr}.ff-btn{min-height:44px}#fanFocusPanel{padding:8px}}
+  @media(prefers-reduced-motion:reduce){#fanFocusPanel *,#fanFocusPanel *::before,#fanFocusPanel *::after{animation:none!important;transition:none!important}}
 </style>
 <section id="fanFocusPanel" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="fanFocusHeading">
   <div class="ff-dialog">

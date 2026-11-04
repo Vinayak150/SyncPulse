@@ -54,9 +54,15 @@ export function mountFanFocus(root=document, getViewerState=()=>window.SyncPulse
   const voiceBtn=byId('fanFocusVoice'),breakBtn=byId('fanFocusBreak'),timerEl=byId('fanFocusTimer');
   const overviewEl=byId('fanFocusOverview'),listEl=byId('fanFocusHighlights'),statusEl=byId('fanFocusStatus');
   const resultEl=byId('fanFocusResult');
-  let mark=null,summary=null,lastScenario=null,tick=null,deadline=0,openingFocus=null;
+  let mark=null,summary=null,lastScenario=null,tick=null,deadline=0,openingFocus=null,lastRenderedKey=null;
   const setStatus=s=>{statusEl.textContent=s;};
   const safe=()=>{const s=getViewerState();return s && Array.isArray(s.visibleEvents)?s:null;};
+  const stateKey=s=>[
+    s.scenarioId,s.viewerCursorSeq,s.scoreRuns,s.scoreWickets,s.runsRequired,
+    s.legalBallsRemaining,s.teams?.batting,s.teams?.bowling,
+    s.visibleEvents.slice(-3).map(e=>[e.id,e.seq,e.runsBat,e.runsTotal,e.isWicket,e.extraType].join(',')).join(';'),
+    mark?.cursor ?? 'none'
+  ].join(':');
   function stopTimer(){
     if(tick!==null){clearInterval(tick);tick=null;}
     deadline=0;timerEl.textContent='00:45';
@@ -65,8 +71,10 @@ export function mountFanFocus(root=document, getViewerState=()=>window.SyncPulse
   function refresh(){
     const state=safe();
     if(!state){setStatus('Viewer state not ready');return;}
-    if(lastScenario!==null && lastScenario!==state.scenarioId){mark=null;stopTimer();}
+    if((lastScenario!==null && lastScenario!==state.scenarioId) ||
+       (mark && state.viewerCursorSeq < mark.cursor)){mark=null;stopTimer();}
     lastScenario=state.scenarioId;
+    lastRenderedKey=stateKey(state);
     summary=summarizeVisibleSince(state,mark);
     overviewEl.textContent=summary.overview;
     statusEl.textContent=`${mark?.scenarioId===state.scenarioId?'Bookmarked event #'+mark.cursor:'No bookmark yet'} • Viewer-safe through ${summary.visibleThrough} ov`;
@@ -85,7 +93,14 @@ export function mountFanFocus(root=document, getViewerState=()=>window.SyncPulse
   const hide=()=>{panel.hidden=true;panel.setAttribute('aria-hidden','true');window.speechSynthesis?.cancel();speaking=false;voiceBtn.textContent='Read aloud';openingFocus?.focus?.();};
   openBtn.addEventListener('click',open);
   close.addEventListener('click',hide);
-  panel.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();hide();}});
+  panel.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){e.preventDefault();hide();return;}
+    if(e.key!=='Tab')return;
+    const focusables=[close,markBtn,recapBtn,breakBtn,voiceBtn,copyBtn];
+    const pos=focusables.indexOf(root.activeElement);
+    if(e.shiftKey && pos<=0){e.preventDefault();focusables.at(-1).focus();}
+    else if(!e.shiftKey && pos===focusables.length-1){e.preventDefault();focusables[0].focus();}
+  });
   markBtn.addEventListener('click',()=>{
     const state=safe();if(!state)return;
     mark=makeVisibleBookmark(state);refresh();
@@ -142,7 +157,12 @@ export function mountFanFocus(root=document, getViewerState=()=>window.SyncPulse
     };
     tick=setInterval(update,250);update();
   });
-  const pulse=setInterval(()=>{if(!panel.hidden)refresh();},1200);
+  const pulse=setInterval(()=>{
+    if(panel.hidden)return;
+    const state=safe();if(!state)return;
+    const nextKey=stateKey(state);
+    if(nextKey!==lastRenderedKey)refresh();
+  },1200);
   panel.hidden=true;
   return {refresh,dispose(){clearInterval(pulse);stopTimer();},getMark:()=>mark};
 }

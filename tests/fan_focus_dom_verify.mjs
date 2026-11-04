@@ -7,9 +7,9 @@ class MockNode {
   setAttribute(n,v){this.attrs[n]=v;}
   replaceChildren(){this.children=[];}
   appendChild(el){this.children.push(el);return el;}
-  focus(){this.focused=true;}
+  focus(){this.focused=true;if(typeof root!=='undefined')root.activeElement=this;}
   click(){for(const fn of this.listeners.get('click')||[])fn({preventDefault(){}});}
-  key(key){for(const fn of this.listeners.get('keydown')||[])fn({key,preventDefault(){}});}
+  key(key,shiftKey=false){for(const fn of this.listeners.get('keydown')||[])fn({key,shiftKey,preventDefault(){}});}
 }
 const ids=['fanFocusOpen','fanFocusPanel','fanFocusClose','fanFocusMark','fanFocusRecap','fanFocusCopy','fanFocusVoice','fanFocusBreak','fanFocusTimer','fanFocusOverview','fanFocusHighlights','fanFocusStatus','fanFocusResult'];
 const nodes=new Map(ids.map(id=>[id,new MockNode(id)]));
@@ -34,6 +34,10 @@ try{
  el('Open').click();assert.equal(el('Panel').hidden,false);assert.ok(el('Close').focused);pass('Drawer opens and moves focus');
  assert.match(el('Overview').textContent,/1 revealed/);pass('Viewer-visible summary renders');
  el('Mark').click();assert.equal(ui.getMark().cursor,1);pass('Bookmark uses viewer cursor');
+ const message=el('Status').textContent;
+ await new Promise(r=>setTimeout(r,1300));
+ assert.equal(el('Status').textContent,message);
+ pass('Periodic refresh does not overwrite bookmark confirmation');
  assert.match(el('Overview').textContent,/No newly revealed/);pass('Bookmark prevents duplicate prior history');
  visibleCount=2;ui.refresh();assert.match(el('Overview').textContent,/1 revealed/);assert.match(el('Highlights').children[0].textContent,/SIX/);pass('Newly revealed event appears');
  el('Copy').click();await new Promise(r=>setImmediate(r));assert.match(copied,/16.5.*SIX/);assert.doesNotMatch(copied,/hidden|unreleased wicket/i);pass('Share receipt copies only visible event');
@@ -42,6 +46,9 @@ try{
  el('Break').click();assert.equal(el('Break').textContent,'Cancel Ad-Break');pass('Ad-break timer starts on user action');
  el('Break').click();assert.equal(el('Timer').textContent,'00:45');pass('Ad-break timer cancels cleanly');
  el('Panel').key('Escape');assert.equal(el('Panel').hidden,true);pass('Escape closes dialog');
- el('Open').click();assert.equal(el('Panel').hidden,false);el('Close').click();assert.equal(el('Panel').hidden,true);pass('Close button closes dialog');
+ el('Open').click();assert.equal(el('Panel').hidden,false);
+ el('Copy').focus();el('Panel').key('Tab');assert.equal(root.activeElement,el('Close'));pass('Tab wraps from last to first dialog control');
+ el('Close').focus();el('Panel').key('Tab',true);assert.equal(root.activeElement,el('Copy'));pass('Shift+Tab wraps from first to last dialog control');
+ el('Close').click();assert.equal(el('Panel').hidden,true);pass('Close button closes dialog');
  console.log('FAN FOCUS DOM:',n+'/'+n,'passed');
 } finally { ui.dispose(); }

@@ -67,7 +67,7 @@ node tests/fan_focus_verify.mjs
 node tests/fan_focus_dom_verify.mjs
 ```
 
-The test suite includes 34 unit/property checks, 14 scripted DOM user flows, 21 HTTP security assertions, 16 Fan Focus noninterference/logic assertions, and 13 Fan Focus UI control-flow assertions (98 distinct automated checks). The DOM harness runs 24 embedded browser-like self-tests, but it is **not a substitute for real Chrome/Safari/mobile acceptance testing**.
+The test suite includes 34 unit/property checks, 14 scripted DOM user flows, 21 HTTP security assertions, 16 Fan Focus noninterference/logic assertions, and 16 Fan Focus UI control-flow assertions (101 distinct automated checks). The DOM harness runs 24 embedded browser-like self-tests, but it is **not a substitute for real Chrome/Safari/mobile acceptance testing**.
 
 ## Deployment
 
@@ -77,4 +77,4 @@ Endpoints: `GET /`, `GET /api/health`, `GET /api/live/matches`, `GET /api/live/s
 
 ## Submission
 
-See `SUBMISSION_NOTE_AND_DEMO_SCRIPT.md` for a short (under 200 words) note and a spoiler-safe, two-minute reviewer walkthrough. The app has no Dream11 affiliation and no official sports data feed.
+See `SUBMISSION_NOTE_AND_DEMO_SCRIPT.md` for a short (under 200 words) note and a spoiler-safe, two-minute reviewer walkthrough. For independently executed browser tests, security findings, and honest limitations see `ENGINEERING_AUDIT.md`. The app has no Dream11 affiliation and no official sports data feed.
