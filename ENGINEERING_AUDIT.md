@@ -45,3 +45,32 @@ The existing `Desktop/dream11` code was reviewed and changed in place, preservin
 5. Show the optional System Proof and NetworkX visualization only if the reviewer wants engineering depth.
 
 The 200-word submission statement is maintained in `SUBMISSION_NOTE_AND_DEMO_SCRIPT.md`.
+
+## V6.0 Multi-Sport Live Center extension (4 November 2026)
+
+**Purpose:** The first-screen experience must no longer suggest that a synthetic cricket replay is a real match. The default Live Match Center is separate from the intact V5.5 cricket demo, available via `/#demo`.
+
+**Genuine provider integrations:** OpenLigaDB Bundesliga (documented no-key data), ESPN ATP/WTA public scoreboard (unofficial, undocumented and not contractually guaranteed), TheSportsDB badminton partial daily fixtures (not live scoring), optional credential-dependent CricAPI match summaries. The public endpoint `/api/sports/matches?sport=...` never synthesizes scores to disguise provider failures.
+
+**Spoiler model:** Live Center buffers up to 40 changed externally reported score snapshots in FIFO order and manually reveals one at a time. There is no automatic display of new score data. Provider failures are surfaced as unavailable/stale; previous revealed scores are preserved on refresh failures. Provider HTTP caching is shared per server instance with bounded timeouts and single-flight upstream requests to protect quotas. Live and Demo share navigation but do not share cricket simulation data.
+
+**Accuracy hardening:** Future football fixtures without actual match results do not show a fabricated 0-0. Live confidence considers upstream status and available timestamps. Tennis set values are rendered as provider records only, without invented point-event commentary. Empty badminton results do not imply no badminton matches exist.
+
+**Security limitation:** Unrevealed live provider scores are buffered client-side and not displayed in the UI, but they are still present in the network JSON and therefore accessible through developer tools. Consequently, this is a *viewer-controlled UI spoiler shield*, not a proof of network-level noninterference. Production-grade protection requires per-viewer server-side projections, trusted OTT timestamps/event identifiers, and an authenticated score release protocol. The Demo Lab's visible-prefix tests do **not** prove this stronger property for independent external data providers.
+
+**Verification:**
+- 34 cricket unit/property tests
+- 14 existing VM DOM flows
+- 27 HTTP security checks
+- 16 Fan Focus pure-unit checks
+- 16 Fan Focus DOM checks
+- 29 Live Center provider, queue, cache and source-failure checks
+- **136/136 local automated tests passed**
+- 17/17 real Chrome desktop/mobile live-provider and Demo Lab switching tests
+- 11/11 real Chrome FIFO score-reveal and simulated outage tests
+- 22/22 real Chrome legacy Demo Lab acceptance tests
+- 5/5 deeper Chrome concurrency and SSE/Grok state tests
+- **55/55 additional real-browser assertions passed locally**, with separate categories above. The mocked FIFO browser test uses explicitly labeled mock provider data; it is not evidence of actual sports match outcomes.
+- Live Render deployment is checked separately after each GitHub push.
+
+**Operating caveats:** Free hosting cold starts, incomplete badminton/cricket source coverage without authorization, ESPN endpoint use subject to upstream conditions, no real video playback synchronization, no licensed ball-by-ball feed, and synthetic-only cricket model validation. These limitations are disclosed, not concealed.

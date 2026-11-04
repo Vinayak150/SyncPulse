@@ -25,16 +25,28 @@ try {
   assert.notEqual(cookieA, cookieB);
   pass('Independent visitors receive different session identifiers');
 
-  for (const p of ['/.git/config', '/.git/HEAD', '/.gitignore', '/data/ipl_json.zip', '/package.json', '/README.md', '/api/index.mjs', '/src/server/liveTelemetryServer.mjs', '/%2e%2e/%2e%2e/etc/passwd']) {
+  for (const p of ['/.git/config', '/.git/HEAD', '/.gitignore', '/data/ipl_json.zip', '/package.json', '/README.md', '/api/index.mjs', '/src/server/liveTelemetryServer.mjs', '/src/live/providerHub.mjs', '/%2e%2e/%2e%2e/etc/passwd']) {
     const r = await request(p, cookieA);
     assert.ok(r.status === 403 || r.status === 404, `${p} leaked: ${r.status}`);
     pass(`Private resource blocked: ${p}`);
   }
-  for (const p of ['/index.html', '/src/models/model_artifact_v2.json', '/src/models/networkGraphEngine.mjs', '/src/features/fanFocus.mjs']) {
+  for (const p of ['/index.html', '/src/models/model_artifact_v2.json', '/src/models/networkGraphEngine.mjs', '/src/features/fanFocus.mjs', '/src/live/liveCenter.mjs', '/src/live/liveCenter.css']) {
     const r = await request(p, cookieA);
     assert.equal(r.status, 200, p);
     pass(`Allowlisted static resource works: ${p}`);
   }
+
+  const css = await request('/src/live/liveCenter.css',cookieA);
+  assert.ok(css.headers.get('content-type').includes('text/css'));
+  pass('Live UI stylesheet served with CSS MIME type');
+  const badSport = await request('/api/sports/matches?sport=invalid', cookieA);
+  assert.equal(badSport.status,400);
+  pass('Unsupported sport parameter blocked before provider fetch');
+  const cricketStatus = await request('/api/sports/matches?sport=cricket', cookieA);
+  assert.equal(cricketStatus.status,200);
+  const cricketData = await cricketStatus.json();
+  assert.ok(['CONFIG_REQUIRED','OK','UNAVAILABLE'].includes(cricketData.status));
+  pass('Cricket source returns honest provider status');
 
   const malicious = await request('/api/live/reset', cookieA, { method: 'POST', headers: { Origin: 'https://attacker.example', 'Content-Type': 'application/json' }, body: '{}' });
   assert.equal(malicious.status, 403);

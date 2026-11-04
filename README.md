@@ -1,19 +1,34 @@
-# SyncPulse11 V5.5 | Spoiler-Safe AI Cricket Co-Pilot
+# SyncPulse11 V6.0 | Spoiler-Safe Sports Companion
 
-> Stay in sync. Understand every ball. Never lose the moment.
+> Follow the match. Protect the moment. Reveal on your own terms.
 
-**Dream11 Forward Deployed Engineer internship artifact.** Live cricket viewers watching a delayed OTT stream can see outcomes spoiled by second-screen scoreboards and alerts. SyncPulse11's viewer cursor reveals only the events the fan has watched, while the incoming match-event cursor can continue to advance.
+**Dream11 Forward Deployed Engineer internship artifact.** Fans watching OTT sports streams are frequently several seconds or deliveries behind score providers. Traditional companion scoreboards can expose match-changing moments before the viewer sees them. SyncPulse11 buffers updates behind a user-controlled viewer cursor and provides context only after the user explicitly reveals a score snapshot.
 
-## 60-second product tour
+**Working demo:** https://syncpulse11-fde-demo.onrender.com
+**Source:** https://github.com/Vinayak150/SyncPulse
 
-1. Open the app and start the **Death-Over Chase** demo.
-2. Use **Manual Sync** to stay behind a stadium delivery. The shield keeps the scoreboard, analysis, AI briefs, and predictions on the visible prefix.
-3. Use **PulseBrief** to catch up in Analyst, Hinglish or Silent mode.
-4. Lock **Captain's Call** before revealing its target ball; the result remains pending until the fan catches up.
-5. Open **Fan Focus** to bookmark a delivery, simulate a 45-second ad break, get an evidence-limited catch-up recap, read it aloud on demand, or copy a spoiler-safe receipt. The module was adapted from the second independent DeepSeek SyncPulse11 prototype's ad-break, audio and receipt ideas.
-6. Explore the optional Quant, Network Graph, and System Proof workspaces.
+## Two separate experiences
 
-All included match scenarios are **illustrative, scripted or simulated**. IND vs NZ is a **demo replay**, not a connected real-time feed. The scorer pad and autonomous broadcaster generate **simulated** deliveries; they are not an official live data supplier.
+### 1. Live Match Center (default landing page)
+
+This experience fetches **actual external scoreboard records**, with honest status and source metadata. It is **not a live video stream**, and it never displays cricket's synthetic scenarios as external live results.
+
+| Sport | Source | Current coverage | Limits |
+| --- | --- | --- | --- |
+| Football | [OpenLigaDB](https://api.openligadb.de/index.html) | Bundesliga fixtures, final scores and reported goals | No-key documented API; competition coverage is limited |
+| Tennis | [ESPN ATP/WTA scoreboards](https://www.espn.com/tennis/) | Provider-reported ATP/WTA competitions, set scores, statuses | Public but **unofficial/undocumented** JSON endpoint; no reliability or redistribution guarantee |
+| Badminton | [TheSportsDB public v1](https://www.thesportsdb.com/documentation) | Partial free fixture discovery only | Free tier does **not** provide a verified real-time point-by-point feed |
+| Cricket | [CricAPI](https://www.cricapi.com/) | Provider-backed match summaries **only if an authorized `CRICAPI_KEY` is set** | No real feed without credentials, and summaries are not ball-by-ball event synchronization |
+
+**Live Match Center flow:** choose a sport -> select a fixture (the score remains hidden) -> let the provider refresh -> reveal **one oldest buffered snapshot at a time** -> receive a factual, evidence-limited summary of score differences. The app checks for new source snapshots every 45 seconds and shares a 40-second server cache across visitors. It buffers a maximum of 40 changed score snapshots; overflow is explicitly disclosed. Scheduled matches display no invented 0-0 scores. Unavailable or stale sources remain labeled as such, with no artificial fallback.
+
+**Honest synchronization limitation:** Without the actual OTT/player playback timestamp or a verified delivery/point ID feed, the app **cannot automatically infer when the viewer has seen an event**. SyncShield therefore implements manual disclosure of provider snapshots rather than asserting automatic video-perfect alignment. No unseen provider scores are rendered in the fixture list, visible scoreboard, or contextual insights. Browser network developer tools can still inspect returned JSON; preventing that would require a trusted server-side per-viewer buffer with authenticated playback synchronization.
+
+### 2. Demo & Learning Lab (`/#demo`)
+
+The original, fully preserved cricket engine includes curated death-over chase, scripted IND vs NZ replay, autonomous **simulated** scorer, detailed event-source projector, SyncShield's ball-by-ball cursor, PulseBrief, Fan Focus, Captain's Call, Monte Carlo, illustrative win probability, tactical graphs and system proof. This mode is a tutorial for how a future licensed ball-by-ball source could integrate with the event engine. Its events are **not real live match events**.
+
+The demo's 12-feature probability model was trained and calibrated on **synthetically generated T20 chases**, using `scripts/train_and_calibrate_wp.mjs`; it does *not* ingest the bundled Cricsheet dataset. The model artifact's Brier 0.1196, AUC 0.9106 and ECE 1.42% are synthetic hold-out evaluation metrics, **not independent IPL historical out-of-sample validation**. DLS and tactical calculations are educational approximations, not official cricket systems. NetworkX-style SVG topology is hand-implemented JavaScript, not the Python NetworkX runtime.
 
 ## Run locally
 
@@ -24,57 +39,48 @@ npm test
 npm run start:live
 ```
 
-Open `http://localhost:4111` or set `PORT` to change the port. Core features work without external API keys. Note: the page loads Tailwind and font resources from CDNs when online, although its core deterministic engines do not require a paid AI API.
+Open http://localhost:4111 for Live Match Center or http://localhost:4111/#demo for the cricket learning lab. Live Match Center requires internet access to upstream sports providers. The cricket demo's deterministic engines work without a paid model API, though Tailwind and web fonts load over public CDNs.
 
-## Model provenance and limitations
+**Optional authorized cricket connector:** create an account with the upstream provider, verify the API's permitted use, then set `CRICAPI_KEY` as a Render environment secret or a local shell environment variable. Never paste API keys into the browser, GitHub, README or ChatGPT. Without the key, cricket displays a precise `CONFIG_REQUIRED` status.
 
-The win-probability model has 12 engineered features, calibrated on a **synthetic T20 match simulator**. `scripts/train_and_calibrate_wp.mjs` generates 6,240 chases with seeded, manually specified phase/wicket transition probabilities. It **does not train on the bundled Cricsheet archive**. Reported Brier 0.1196, AUC 0.9106 and ECE 1.42% evaluate a *simulated held-out set* from this simulator; they are **not historical IPL out-of-sample scores**. They should not be compared to real-world research benchmarks. The Cricsheet data archive is excluded from Git. Simulations and model outputs are illustrative, not betting advice.
+**Optional Grok:** A user may explicitly provide their own xAI key for optional grounded rewriting in the Demo Lab. No organization-wide paid key is used for anonymous website traffic. The default briefing engine is deterministic, evidence-grounded synthesis, **not an LLM call**.
 
-The deterministic offline briefing engine creates structured evidence-backed text; it is not a generative LLM. The Grok endpoint can optionally rewrite the viewer-visible briefing when a visitor explicitly supplies their own xAI API key. The server does not use global paid-provider keys for anonymous visitors. No paid model is required for the submission demonstration. DLS estimates and field diagrams are educational approximations, not official match technology. The NetworkX-style SVG visual is a hand-implemented graph, not a claim of Python NetworkX runtime dependency.
-
-## Architecture
+## Architecture and trust boundaries
 
 ```text
-Curated/simulated event input
-   -> cricket state transition + event log
-   -> viewer cursor projection (strict visible prefix)
-   -> win-probability, Monte Carlo, graphs and explanations
-   -> fan UI + spoiler-gated interactions
+EXTERNAL SCORE PROVIDERS
+  OpenLigaDB / ESPN Tennis / TheSportsDB / optional CricAPI
+       -> server-side adapter (type-safe normalization + strict sports allowlist)
+       -> bounded request timeout / 40s shared cache / concurrent fetch de-duplication
+       -> GET /api/sports/matches?sport=...
+       -> client-private FIFO score snapshot buffer
+       -> explicit viewer reveal cursor -> factual snapshot-difference insight
 
-Node HTTP server -> session-specific scorer + SSE feed
-                 -> per-session rate limits and restricted static assets
+CRICKET DEMO (INDEPENDENT)
+  curated/synthetic delivery -> pure cricket event transition
+       -> viewer-safe visible prefix -> win probability / Monte Carlo / brief / graph
+       -> spoiler-gated Captain's Call + Fan Focus
+       -> per-session Node scorer + SSE demonstration feed
 ```
 
-- `index.html`: self-contained browser UX and offline demo.
-- `src/engine/cricketStateEngine.mjs`: match state, legal deliveries, striker changes and spoiler-safe projections.
-- `src/models/winProbAndMonteCarlo.mjs`: estimated chase probabilities and seeded simulation.
-- `src/models/networkGraphEngine.mjs`: Markov and tactical-entity visualization models.
-- `src/ai/pulseBriefEngine.mjs`: evidence-grounded briefing.
-- `src/features/fanFocus.mjs`: independent Fan Focus ad-break recovery, viewer-visible recap, opt-in speech and share receipt. A pure viewer-state bridge prevents hidden stadium events from entering its data flow.
-- `src/server/liveTelemetryServer.mjs`: HTTP, isolated demo sessions, scorer, SSE, optional xAI proxy.
-- `tests/`: unit, DOM and HTTP-security verification.
+The two products share the navigation shell but **not the score data or core event models**. New modules are `src/live/providerHub.mjs`, `src/live/liveCenter.mjs`, and `src/live/liveCenter.css`. The existing engine lives under `src/engine/`, `src/models/`, `src/ai/`, and `src/features/`.
 
-The public server only serves allowlisted frontend assets (including the Fan Focus module), not `.git`, raw archives or source files outside the allowlist. Demo SSE and match mutation state are isolated per browser session using an HttpOnly cookie. Sessions are ephemeral; they can reset after instance restart or Render free-plan sleep. Rate limits are basic per-session controls, not a substitute for authentication, distributed abuse prevention or production persistence.
+The backend denies access to `.git`, raw archives and internal server source. The demo scorer uses per-browser HttpOnly session cookies and same-origin mutations. Rate limits and session isolation are demo controls, not a substitute for authentication, a persistent event store or production abuse prevention. External feeds and provider response time are outside this project's control. Source-specific licenses and provider terms must be reviewed before commercial use.
 
-## Tests
+## Verification
 
 ```bash
 npm test
-npm run test:unit
-npm run test:e2e
-node tests/security_http_verify.mjs
-node tests/fan_focus_verify.mjs
-node tests/fan_focus_dom_verify.mjs
+node tests/live_center_verify.mjs
+node tests/public_smoke_verify.mjs
 ```
 
-The test suite includes 34 unit/property checks, 14 scripted DOM user flows, 21 HTTP security assertions, 16 Fan Focus noninterference/logic assertions, and 16 Fan Focus UI control-flow assertions (101 distinct automated checks). The DOM harness runs 24 embedded browser-like self-tests, but it is **not a substitute for real Chrome/Safari/mobile acceptance testing**.
+The default tests cover cricket invariants, original VM DOM flows, HTTP security, Fan Focus, source normalization, concurrency, cache behavior and FIFO spoiler isolation. See `ENGINEERING_AUDIT.md` for the exact counts and limitations, and `SUBMISSION_NOTE_AND_DEMO_SCRIPT.md` for the assignment's under-200-word submission note.
 
-## Deployment
+## Deployment and operating limits
 
-`render.yaml` deploys a Node web service (free plan, `npm test` build, `npm run start:live` start), with GitHub auto-deploy. Render free instances may sleep during inactivity and lose process-local demo state. First hit after sleep may take longer than a normal page request. Keep `XAI_API_KEY` unset. For long-term production use, add durable match storage, proper authenticating operators, trusted event ingestion, horizontal coordination, and comprehensive provider-based real-world model evaluation.
+`render.yaml` specifies a Node Web Service with `npm test` on build, `npm run start:live` for runtime and GitHub auto-deployment. Render's free plan can sleep when idle, lose its ephemeral process-local demo sessions and require a cold start. Source discovery is independent of the synthetic demo session; data provider outages display real error/stale states rather than invented updates.
 
-Endpoints: `GET /`, `GET /api/health`, `GET /api/live/matches`, `GET /api/live/stream`, `GET /api/live/state`, `POST /api/live/delivery`, `POST /api/live/autostream`, `POST /api/live/reset`, `POST /api/quant/evaluate`, and `POST /api/ai/grok`.
+The public API surface includes `GET /api/health`, `GET /api/sports/matches?sport=football|tennis|badminton|cricket`, the existing demo SSE/scorer routes, and the demo Grok/quant evaluation endpoints.
 
-## Submission
-
-See `SUBMISSION_NOTE_AND_DEMO_SCRIPT.md` for a short (under 200 words) note and a spoiler-safe, two-minute reviewer walkthrough. For independently executed browser tests, security findings, and honest limitations see `ENGINEERING_AUDIT.md`. The app has no Dream11 affiliation and no official sports data feed.
+The app is a non-affiliated educational engineering artifact; no sports provider, tournament, Dream11 or broadcaster sponsors its external scores.

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SyncPulse11 V5.5 — Spoiler-Safe AI Cricket Co-Pilot (Interactive Replay + Network Graph)</title>
+  <title>SyncPulse11 | Spoiler-Safe Sports Companion and Live Match Center</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -95,7 +95,61 @@
   </style>
 </head>
 <body class="min-h-screen flex flex-col selection:bg-violet-500/30 selection:text-violet-200">
-  <div role="status" class="w-full bg-amber-950/70 border-b border-amber-500/30 text-amber-100 text-xs text-center px-4 py-2">DEMO MODE: Match scores and event streams are scripted or simulated, not a verified live sports feed. Win probability metrics are evaluated on synthetic simulated chases, not held-out historical IPL matches.</div>
+  <!-- PRODUCT EXPERIENCE SWITCH: external provider scores never mix with simulated replay. -->
+  <div id="experienceBar" class="xp-bar">
+    <div class="xp-brand"><span class="xp-symbol">S<span style="color:#66e2a9">P</span></span><div><strong>SyncPulse11</strong><small>THE SPOILER-SAFE SPORTS COMPANION</small></div></div>
+    <nav class="xp-switch" aria-label="Product experiences">
+      <button id="xpGoLive" type="button" class="xp-option is-selected" aria-current="page">◉ Live Match Center</button>
+      <button id="xpGoDemo" type="button" class="xp-option">◈ Demo & Learning Lab</button>
+    </nav>
+    <span class="xp-right">SCORES, NOT VIDEO · PROTECT THE MOMENT</span>
+  </div>
+
+  <main id="liveCenterRoot" class="live-center" aria-label="External sports scores and spoiler-safe match follow">
+    <section class="lc-hero">
+      <div><p class="lc-eyebrow"><span class="lc-pulse"></span> THE LIVE MATCH CENTER <span class="lc-separator">/</span> REAL PROVIDER DATA</p>
+      <h2>Your game.<br><em>Your moment.</em> Never spoiled.</h2>
+      <p class="lc-lead">Follow real match scoreboards for football and tennis. Every incoming update stays behind your personal SyncShield until you reveal it. Live match data comes from external providers, not our cricket simulator.</p>
+      <div class="lc-hero-actions"><button type="button" id="lcHeroExplore" class="lc-primary">Explore matches <span aria-hidden="true">↗</span></button><span class="lc-explain"><span class="lc-dot"></span> Auto-update checks every 45 seconds · Reveal is always manual</span></div></div>
+      <div class="lc-orbit-card" aria-hidden="true"><div class="lc-orbit-ring"></div><div class="lc-orbit-center"><span>◉</span><b>SYNC<br>SHIELD</b></div><div class="lc-orbit-tag lc-orbit-tag-a">SOURCE DATA</div><div class="lc-orbit-tag lc-orbit-tag-b">VIEWER CONTROL</div><p>Provider → Private buffer → You</p></div>
+    </section>
+
+    <section class="lc-workspace" id="lcWorkspace">
+      <div class="lc-toolbar">
+        <div><span class="lc-section-kicker">01 / MATCH DISCOVERY</span><h3>Live & upcoming fixtures</h3></div>
+        <div class="lc-toolbar-actions"><span id="lcStatusBadge" class="lc-status-badge">Connecting to source…</span><button type="button" id="lcRefresh" class="lc-subtle">↻ Refresh</button></div>
+      </div>
+      <div class="lc-sport-tabs" role="group" aria-label="Choose a sport">
+        <button type="button" class="lc-sport" data-lc-sport="football">⚽ Football <small>Bundesliga</small></button>
+        <button type="button" class="lc-sport is-selected" data-lc-sport="tennis">🎾 Tennis <small>ATP / WTA</small></button>
+        <button type="button" class="lc-sport" data-lc-sport="badminton">🏸 Badminton <small>Limited fixtures</small></button>
+        <button type="button" class="lc-sport" data-lc-sport="cricket">🏏 Cricket <small>Provider required</small></button>
+      </div>
+      <div class="lc-main-grid">
+        <div class="lc-fixture-column">
+          <div class="lc-list-header"><span id="lcSportTitle">Tennis · ATP / WTA</span><span id="lcMatchCount">Connecting…</span></div>
+          <p id="lcProviderMessage" class="lc-provider-message" role="status">Loading provider fixtures.</p>
+          <div id="lcMatchList" class="lc-match-list" aria-live="polite"><div class="lc-empty">Contacting verified external data source…</div></div>
+        </div>
+        <aside class="lc-viewer">
+          <div class="lc-viewer-header"><div><span class="lc-section-kicker">02 / SPOILER-SAFE VIEWER</span><h3>Your private score window</h3></div><span class="lc-shield-pill">♢ SHIELD ON</span></div>
+          <div id="lcSelected" class="lc-selected"><span class="lc-selected-overline">NO MATCH FOLLOWED</span><h4>Select a fixture to begin</h4><p>Scores are never auto-revealed. Follow a match, then decide when to view the next verified snapshot.</p></div>
+          <div class="lc-snapshot">
+            <div class="lc-snapshot-top"><span>YOUR LAST REVEALED SCORE</span><span id="lcSourceTime">Awaiting source</span></div>
+            <div id="lcVisibleScore" class="lc-score-main">— <span>Shielded</span></div>
+            <div id="lcPending" class="lc-pending">Choose a match to watch for updates.</div>
+            <button type="button" id="lcReveal" class="lc-primary lc-reveal" disabled>Reveal latest provider snapshot <span aria-hidden="true">→</span></button>
+          </div>
+          <div class="lc-intel"><span class="lc-section-kicker">03 / EVIDENCE-GROUNDED INSIGHT</span><h4 id="lcInsightTitle">Awaiting your first reveal</h4><p id="lcInsightBody">Unlike a prediction, this briefing uses only confirmed, manually revealed source snapshots. No hidden match outcomes are sent to this panel.</p><div id="lcEvidence" class="lc-evidence"></div></div>
+          <div class="lc-note">The score cursor is controlled by you. We cannot automatically align it to a TV or OTT delay without a verified playback clock. No video is hosted here.</div>
+        </aside>
+      </div>
+      <footer class="lc-data-footer"><div><b id="lcSourceName">SOURCE / CONNECTING</b><span id="lcFetchTime">Awaiting response</span></div><a id="lcSourceLink" href="https://www.openligadb.de/" rel="noopener noreferrer" target="_blank">Data provider ↗</a></footer>
+    </section>
+    <section class="lc-bottom"><div><span class="lc-section-kicker">THE DIFFERENCE</span><h3>Experience the engine without a real-match spoiler.</h3><p>The separate Demo & Learning Lab contains cricket replay, SyncShield packet proofs, Monte Carlo, PulseBrief, Captain's Call and Fan Focus. It uses explicitly simulated data and never contaminates the external live center.</p></div><button id="lcGoDemo" class="lc-secondary" type="button">Open the interactive demo ↗</button></section>
+  </main>
+  <div id="demoAppShell" hidden>
+  <div role="status" class="w-full bg-amber-950/70 border-b border-amber-500/30 text-amber-100 text-xs text-center px-4 py-2">DEMO / TUTORIAL ONLY: scripted or simulated cricket. The synthetic-model calibration figures are not historical IPL performance measurements. For external scores use Live Match Center above.</div>
 
   <!-- TOP STARTUP NAVIGATION & MULTI-ENGINE WORKSPACE BAR -->
   <header class="sticky top-0 z-30 bg-[#07090F]/95 backdrop-blur-md border-b border-slate-800/80 px-4 py-2.5">
@@ -108,7 +162,7 @@
           </div>
           <div>
             <div class="flex items-center gap-2 flex-wrap">
-              <h1 class="text-base font-extrabold tracking-tight text-white">SyncPulse11 <span class="text-violet-400 font-mono-tabular text-xs font-bold">V5.5</span></h1>
+              <h1 class="text-base font-extrabold tracking-tight text-white">SyncPulse11 <span class="text-violet-400 font-mono-tabular text-xs font-bold">V6.0</span></h1>
               <span class="text-[11px] font-mono-tabular px-2 py-0.5 rounded-md bg-sky-500/15 text-sky-300 border border-sky-500/30" title="Synthetic simulation of 6,240 chases; held-out performance reflects simulated data, not historical matches.">
                 Spoiler-safe • Simulated match intelligence
               </span>
@@ -5201,6 +5255,7 @@
 
         // Accessible Keyboard Shortcuts (ignored when typing in inputs)
         window.addEventListener('keydown', function (e) {
+          if (document.getElementById('demoAppShell')?.hidden) return;
           const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
           if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
           if (e.code === 'Space') {
@@ -5234,6 +5289,8 @@
       });
     })();
   </script>
+  </div><!-- /demoAppShell: legacy cricket engines are preserved and isolated -->
+<link rel="stylesheet" href="/src/live/liveCenter.css" />
 <style>
   #fanFocusPanel[hidden] { display: none !important; }
   #fanFocusPanel { position:fixed; inset:0; z-index:90; display:flex; align-items:center; justify-content:center; padding:18px; background:rgba(2,6,15,.80); backdrop-filter:blur(8px); overscroll-behavior:contain; }
@@ -5283,5 +5340,6 @@
   </div>
 </section>
 <script type="module" src="/src/features/fanFocus.mjs"></script>
+<script type="module" src="/src/live/liveCenter.mjs"></script>
 </body>
 </html>

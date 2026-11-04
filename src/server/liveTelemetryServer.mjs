@@ -14,6 +14,7 @@
 
 import http from 'node:http';
 import { randomUUID } from 'node:crypto';
+import { getLiveMatches } from '../live/providerHub.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -363,6 +364,8 @@ export function createSyncPulseHttpServer() {
     '/src/engine/cricketStateEngine.mjs',
     '/src/models/networkGraphEngine.mjs',
     '/src/features/fanFocus.mjs',
+    '/src/live/liveCenter.mjs',
+    '/src/live/liveCenter.css',
     '/src/models/winProbAndMonteCarlo.mjs',
     '/src/models/model_artifact_v2.json'
   ]);
@@ -422,6 +425,25 @@ export function createSyncPulseHttpServer() {
       res.end();
       return;
     }
+    // Match discovery is stateless and independent of demo sessions.
+    // This route never falls back to scripted data when an upstream source fails.
+    if (pathname === '/api/sports/matches' && req.method === 'GET') {
+      const sport = urlObj.searchParams.get('sport') || 'football';
+      if (!['football','tennis','badminton','cricket'].includes(sport)) {
+        res.writeHead(400, {'Content-Type':'application/json'});
+        res.end(JSON.stringify({error:'Unsupported sport'}));
+        return;
+      }
+      try {
+        const catalog = await getLiveMatches(sport);
+        res.writeHead(200, {'Content-Type':'application/json; charset=utf-8','Cache-Control':'private, max-age=15'});
+        res.end(JSON.stringify(catalog));
+      } catch (_) {
+        res.writeHead(503, {'Content-Type':'application/json'});
+        res.end(JSON.stringify({sport,status:'UNAVAILABLE',matches:[],message:'Upstream provider temporarily unavailable.'}));
+      }
+      return;
+    }
     const current = getSession(req, res);
     if (!current) {
       res.writeHead(503, { 'Content-Type': 'application/json' });
@@ -455,7 +477,7 @@ export function createSyncPulseHttpServer() {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         status: 'ok',
-        service: 'SyncPulse11 V5.5 Full-Stack AI Cricket Co-Pilot',
+        service: 'SyncPulse11 V6.0 Live Match Center + Cricket Demo Lab',
         modelId: MODEL_ARTIFACT.modelId,
         heldOutMetrics: MODEL_ARTIFACT.heldOutMetrics,
         connectedSseClients: sseClients.size,
@@ -759,7 +781,7 @@ export function createSyncPulseHttpServer() {
       return;
     }
     const ext = path.extname(safePath);
-    const mime = ext === '.html' ? 'text/html; charset=utf-8' : ext === '.mjs' || ext === '.js' ? 'application/javascript; charset=utf-8' : ext === '.json' ? 'application/json; charset=utf-8' : 'text/plain';
+    const mime = ext === '.css' ? 'text/css; charset=utf-8' : ext === '.html' ? 'text/html; charset=utf-8' : ext === '.mjs' || ext === '.js' ? 'application/javascript; charset=utf-8' : ext === '.json' ? 'application/json; charset=utf-8' : 'text/plain';
     res.writeHead(200, { 'Content-Type': mime });
     res.end(fs.readFileSync(safePath));
   });
@@ -773,7 +795,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const { server } = createSyncPulseHttpServer();
   server.listen(port, host, () => {
     console.log('========================================================================');
-    console.log(`⚡ SYNCPULSE11 V5.5 HARDENED DEMO SERVER RUNNING ON http://localhost:${port}`);
+    console.log(`⚡ SYNCPULSE11 V6.0 SPORTS COMPANION SERVER RUNNING ON http://localhost:${port}`);
     console.log(`📡 SSE Live Stream:  http://localhost:${port}/api/live/stream`);
     console.log(`🤖 xAI Grok Proxy:   POST http://localhost:${port}/api/ai/grok`);
     console.log(`📈 Quant Engine API: POST http://localhost:${port}/api/quant/evaluate`);

@@ -1,27 +1,28 @@
-# SyncPulse11 V5.5 | Dream11 FDE submission
+# SyncPulse11 | Dream11 FDE submission
 
-## Submission note (under 200 words)
+## Submission note (maximum 200 words)
 
-**SyncPulse11: Spoiler-Safe AI Cricket Co-Pilot**
+**SyncPulse11: A Spoiler-Safe Sports Companion**
 
-Cricket fans following a match on delayed OTT streams often receive score updates before they see the ball. They also lose context after ads or interruptions.
+Fans watching live sport on delayed OTT streams often see a goal, wicket or match result on their phones before the moment appears on screen. They also lose context after interruptions.
 
-I built SyncPulse11 to solve these problems. It separates incoming match events from the last delivery the viewer has watched, keeping unrevealed outcomes out of scoreboards, commentary, model estimates, and prediction results. Fans can catch up through evidence-grounded briefings in Analyst, Hinglish, or Silent mode, bookmark watched deliveries in Fan Focus, review an ad-break recap, share spoiler-safe receipts, and participate in spoiler-gated Captain's Call challenges.
+I built SyncPulse11 to give fans control over when a score update becomes visible. Its **Live Match Center** reads external Bundesliga football and ATP/WTA tennis scoreboards, buffers changed snapshots privately, and lets the fan reveal them one at a time. Evidence-grounded catch-up explanations describe only scores already revealed, without inventing events. Other sports show their actual data coverage rather than fake live scores.
 
-The application includes an interactive event replay, seeded simulations, model-driven cricket explanations, a tactical network visualization, and a browser-session-isolated telemetry demo. Its win-probability model is trained and evaluated on **synthetic simulated chases** and is labeled accordingly. The included match scenarios are demonstrations rather than verified live feeds.
+A separate interactive cricket **Demo Lab** proves the underlying idea at delivery level, with SyncShield cursor isolation, PulseBrief, Captain's Call, ad-break catch-up and a tactical prediction model. Its training results and match replays are explicitly labeled synthetic.
 
-**AI tools used:** Gemini, DeepSeek, and AI coding assistants helped develop and test the application. Runtime explanations use a deterministic grounded engine, with optional xAI Grok rewriting when a user provides their own API key.
+**AI tools used:** Gemini, DeepSeek and AI coding assistants supported design, implementation and testing. The demo includes an illustrative trained probability model and optional xAI Grok rewriting with a user-provided key. Default live summaries are deterministic, source-grounded explanations.
 
-## Two-minute demo
+## Two-minute reviewer walkthrough
 
-| Time | Reviewer action | Product proof |
+| Time | Action | What it proves |
 | --- | --- | --- |
-| 0–20 sec | Open the Death-Over Chase demo and point to the visible viewer cursor | Clear fan problem |
-| 20–50 sec | Advance stadium events while viewer is delayed; inspect scoreboard and AI brief | Spoiler isolation |
-| 50–75 sec | Open Fan Focus, bookmark a watched ball, advance the viewer, refresh recap and copy a safe receipt | Spoiler-safe ad-break recovery |
-| 75–100 sec | Lock Captain's Call; reveal the delivery and resolve it | Fan interaction |
-| 100–120 sec | Open optional system proof and brief quant/network view | Engineering depth |
+| 0–20 seconds | Open Live Match Center; highlight verified provider source, status and freshness | Real-world fan context |
+| 20–45 seconds | Select a real ATP/WTA match; show the hidden score | Live-source integration with safe default |
+| 45–65 seconds | Reveal a buffered provider snapshot; explain FIFO updates and source-grounded recap | Spoiler-safe second-screen design |
+| 65–90 seconds | Switch to Demo & Learning Lab; show stadium ahead of viewer and PulseBrief lagging safely | Event-level noninterference |
+| 90–110 seconds | Show Fan Focus bookmark/catch-up and Captain's Call gating | Useful fan interaction |
+| 110–120 seconds | Show the System Proof graph and mention limits | Engineering ownership, honesty |
 
-**Data disclosure:** The featured IND vs NZ match is a scripted illustrative replay. Simulated probability calibration metrics must not be represented as real-match validation. FNV-1a digests are non-cryptographic equality checks; prefix-equivalence testing is the noninterference evidence.
+**Important qualifications:** The Live Center provides externally sourced *scores*, not video. Automatic synchronization with an OTT stream requires trusted player timestamps or provider event IDs. OpenLigaDB is a documented football source; ESPN tennis JSON is an unofficial best-effort endpoint. The cricket match simulation and its model-validation figures are synthetic. Badminton's free source offers limited schedule discovery, and cricket requires an authorized provider key for external results.
 
-**Pre-submit checklist:** Public homepage and health 200; SSE, scorer and reset usable from an isolated browser; private paths 404; offline fallback works; mobile layout readable; source URL and demo URL accessible.
+**Submission URLs:** https://syncpulse11-fde-demo.onrender.com and https://github.com/Vinayak150/SyncPulse.
