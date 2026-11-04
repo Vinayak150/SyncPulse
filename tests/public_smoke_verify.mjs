@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-const root = process.env.BASE_URL || 'https://syncpulse11-fde-demo.onrender.com';
+const root = process.env.BASE_URL || 'https://syncpulse11.onrender.com';
 const timeout = 25000;
 const options = { signal: AbortSignal.timeout(timeout) };
 const make = async (p, cookie = '', extra = {}) => fetch(root + p, {

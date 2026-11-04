@@ -11,7 +11,7 @@
 ![License](https://img.shields.io/badge/license-MIT-283b4f)
 ![Version](https://img.shields.io/badge/version-6.0.0-283b4f)
 
-**[Open live application](https://syncpulse11-fde-demo.onrender.com)** · **[Explore cricket Demo Lab](https://syncpulse11-fde-demo.onrender.com/#demo)** · **[Architecture](#architecture)** · **[Testing](#testing)**
+**[Open live application](https://syncpulse11.onrender.com)** · **[Explore cricket Demo Lab](https://syncpulse11.onrender.com/#demo)** · **[Architecture](#architecture)** · **[Testing](#testing)**
 
 </div>
 
@@ -67,7 +67,7 @@ A provider outage or missing coverage is shown as such. **Simulated demo matches
 
 ![Actual SyncPulse11 cricket learning lab](docs/images/cricket-demo-lab.jpg)
 
-Open **[Demo & Learning Lab](https://syncpulse11-fde-demo.onrender.com/#demo)** to explore the event-level engine without needing a licensed live delivery feed.
+Open **[Demo & Learning Lab](https://syncpulse11.onrender.com/#demo)** to explore the event-level engine without needing a licensed live delivery feed.
 
 - **SyncShield:** Two event positions distinguish the latest observed stadium event from the delivery the viewer has watched.
 - **PulseBrief:** Deterministic, evidence-grounded explanations over the viewer-visible event prefix.

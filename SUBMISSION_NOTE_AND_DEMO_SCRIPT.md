@@ -25,4 +25,4 @@ A separate interactive cricket **Demo Lab** proves the underlying idea at delive
 
 **Important qualifications:** The Live Center provides externally sourced *scores*, not video. Automatic synchronization with an OTT stream requires trusted player timestamps or provider event IDs. OpenLigaDB is a documented football source; ESPN tennis JSON is an unofficial best-effort endpoint. The cricket match simulation and its model-validation figures are synthetic. Badminton's free source offers limited schedule discovery, and cricket requires an authorized provider key for external results.
 
-**Submission URLs:** https://syncpulse11-fde-demo.onrender.com and https://github.com/Vinayak150/SyncPulse.
+**Submission URLs:** https://syncpulse11.onrender.com and https://github.com/Vinayak150/SyncPulse.
