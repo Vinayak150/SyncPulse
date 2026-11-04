@@ -10,7 +10,8 @@
 2. Use **Manual Sync** to stay behind a stadium delivery. The shield keeps the scoreboard, analysis, AI briefs, and predictions on the visible prefix.
 3. Use **PulseBrief** to catch up in Analyst, Hinglish or Silent mode.
 4. Lock **Captain's Call** before revealing its target ball; the result remains pending until the fan catches up.
-5. Explore the optional Quant, Network Graph, and System Proof workspaces.
+5. Open **Fan Focus** to bookmark a delivery, simulate a 45-second ad break, get an evidence-limited catch-up recap, read it aloud on demand, or copy a spoiler-safe receipt. The module was adapted from the second independent DeepSeek SyncPulse11 prototype's ad-break, audio and receipt ideas.
+6. Explore the optional Quant, Network Graph, and System Proof workspaces.
 
 All included match scenarios are **illustrative, scripted or simulated**. IND vs NZ is a **demo replay**, not a connected real-time feed. The scorer pad and autonomous broadcaster generate **simulated** deliveries; they are not an official live data supplier.
 
@@ -49,10 +50,11 @@ Node HTTP server -> session-specific scorer + SSE feed
 - `src/models/winProbAndMonteCarlo.mjs`: estimated chase probabilities and seeded simulation.
 - `src/models/networkGraphEngine.mjs`: Markov and tactical-entity visualization models.
 - `src/ai/pulseBriefEngine.mjs`: evidence-grounded briefing.
+- `src/features/fanFocus.mjs`: independent Fan Focus ad-break recovery, viewer-visible recap, opt-in speech and share receipt. A pure viewer-state bridge prevents hidden stadium events from entering its data flow.
 - `src/server/liveTelemetryServer.mjs`: HTTP, isolated demo sessions, scorer, SSE, optional xAI proxy.
 - `tests/`: unit, DOM and HTTP-security verification.
 
-The public server only serves allowlisted frontend assets, not `.git`, raw archives or source files outside the allowlist. Demo SSE and match mutation state are isolated per browser session using an HttpOnly cookie. Sessions are ephemeral; they can reset after instance restart or Render free-plan sleep. Rate limits are basic per-session controls, not a substitute for authentication, distributed abuse prevention or production persistence.
+The public server only serves allowlisted frontend assets (including the Fan Focus module), not `.git`, raw archives or source files outside the allowlist. Demo SSE and match mutation state are isolated per browser session using an HttpOnly cookie. Sessions are ephemeral; they can reset after instance restart or Render free-plan sleep. Rate limits are basic per-session controls, not a substitute for authentication, distributed abuse prevention or production persistence.
 
 ## Tests
 
@@ -61,9 +63,11 @@ npm test
 npm run test:unit
 npm run test:e2e
 node tests/security_http_verify.mjs
+node tests/fan_focus_verify.mjs
+node tests/fan_focus_dom_verify.mjs
 ```
 
-The test suite includes 34 unit/property checks, 14 scripted DOM user flows and 20 HTTP security assertions. The DOM harness runs 24 embedded browser-like self-tests, but it is **not a substitute for real Chrome/Safari/mobile acceptance testing**.
+The test suite includes 34 unit/property checks, 14 scripted DOM user flows, 21 HTTP security assertions, 16 Fan Focus noninterference/logic assertions, and 13 Fan Focus UI control-flow assertions (98 distinct automated checks). The DOM harness runs 24 embedded browser-like self-tests, but it is **not a substitute for real Chrome/Safari/mobile acceptance testing**.
 
 ## Deployment
 

@@ -362,6 +362,7 @@ export function createSyncPulseHttpServer() {
     '/src/ai/pulseBriefEngine.mjs',
     '/src/engine/cricketStateEngine.mjs',
     '/src/models/networkGraphEngine.mjs',
+    '/src/features/fanFocus.mjs',
     '/src/models/winProbAndMonteCarlo.mjs',
     '/src/models/model_artifact_v2.json'
   ]);

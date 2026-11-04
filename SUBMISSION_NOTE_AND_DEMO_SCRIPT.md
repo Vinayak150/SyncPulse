@@ -6,11 +6,11 @@
 
 Cricket fans following a match on delayed OTT streams often receive score updates before they see the ball. They also lose context after ads or interruptions.
 
-I built SyncPulse11 to solve these problems. It separates incoming match events from the last delivery the viewer has watched, keeping unrevealed outcomes out of scoreboards, commentary, model estimates, and prediction results. Fans can catch up through evidence-grounded briefings in Analyst, Hinglish, or Silent mode and participate in spoiler-gated Captain's Call challenges.
+I built SyncPulse11 to solve these problems. It separates incoming match events from the last delivery the viewer has watched, keeping unrevealed outcomes out of scoreboards, commentary, model estimates, and prediction results. Fans can catch up through evidence-grounded briefings in Analyst, Hinglish, or Silent mode, bookmark watched deliveries in Fan Focus, review an ad-break recap, share spoiler-safe receipts, and participate in spoiler-gated Captain's Call challenges.
 
 The application includes an interactive event replay, seeded simulations, model-driven cricket explanations, a tactical network visualization, and a browser-session-isolated telemetry demo. Its win-probability model is trained and evaluated on **synthetic simulated chases** and is labeled accordingly. The included match scenarios are demonstrations rather than verified live feeds.
 
-**AI tools used:** Gemini and AI coding assistants helped develop and test the application. Runtime explanations use a deterministic grounded engine, with optional xAI Grok rewriting when a user provides their own API key.
+**AI tools used:** Gemini, DeepSeek, and AI coding assistants helped develop and test the application. Runtime explanations use a deterministic grounded engine, with optional xAI Grok rewriting when a user provides their own API key.
 
 ## Two-minute demo
 
@@ -18,7 +18,7 @@ The application includes an interactive event replay, seeded simulations, model-
 | --- | --- | --- |
 | 0–20 sec | Open the Death-Over Chase demo and point to the visible viewer cursor | Clear fan problem |
 | 20–50 sec | Advance stadium events while viewer is delayed; inspect scoreboard and AI brief | Spoiler isolation |
-| 50–75 sec | Use PulseBrief and change personas | Grounded catch-up |
+| 50–75 sec | Open Fan Focus, bookmark a watched ball, advance the viewer, refresh recap and copy a safe receipt | Spoiler-safe ad-break recovery |
 | 75–100 sec | Lock Captain's Call; reveal the delivery and resolve it | Fan interaction |
 | 100–120 sec | Open optional system proof and brief quant/network view | Engineering depth |
 

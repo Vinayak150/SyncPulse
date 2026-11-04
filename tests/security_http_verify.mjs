@@ -30,7 +30,7 @@ try {
     assert.ok(r.status === 403 || r.status === 404, `${p} leaked: ${r.status}`);
     pass(`Private resource blocked: ${p}`);
   }
-  for (const p of ['/index.html', '/src/models/model_artifact_v2.json', '/src/models/networkGraphEngine.mjs']) {
+  for (const p of ['/index.html', '/src/models/model_artifact_v2.json', '/src/models/networkGraphEngine.mjs', '/src/features/fanFocus.mjs']) {
     const r = await request(p, cookieA);
     assert.equal(r.status, 200, p);
     pass(`Allowlisted static resource works: ${p}`);
