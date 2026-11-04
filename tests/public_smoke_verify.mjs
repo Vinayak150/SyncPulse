@@ -1,0 +1,54 @@
+import assert from 'node:assert/strict';
+const root = process.env.BASE_URL || 'https://syncpulse11-fde-demo.onrender.com';
+const timeout = 25000;
+const options = { signal: AbortSignal.timeout(timeout) };
+const make = async (p, cookie = '', extra = {}) => fetch(root + p, {
+ ...options, ...extra, headers: { ...(cookie ? { Cookie: cookie } : {}), ...(extra.headers || {}) }
+});
+let passed=0;
+const check = (label) => {passed++;console.log('PASS',label)};
+const homeA=await make('/');
+assert.equal(homeA.status,200);
+const cookieA=homeA.headers.get('set-cookie')?.split(';')[0];
+assert.ok(cookieA?.startsWith('sp11_session='));
+check('Public homepage + viewer cookie');
+const homeB=await make('/');
+const cookieB=homeB.headers.get('set-cookie')?.split(';')[0];
+assert.ok(cookieB?.startsWith('sp11_session=') && cookieB!==cookieA);
+check('Separate visitor cookie');
+const health=await (await make('/api/health',cookieA)).json();
+assert.equal(health.status,'ok');
+assert.equal(health.modelEvaluationSource,'SYNTHETIC_MATCH_SIMULATION');
+check('Health + honest synthetic model provenance');
+const matches=await (await make('/api/live/matches',cookieA)).json();
+assert.match(matches.matches[0].status,/DEMO REPLAY/);
+check('Simulated featured match disclaimer');
+for(const p of ['/.git/config','/data/ipl_json.zip','/src/server/liveTelemetryServer.mjs']){
+ const r=await make(p,cookieA);
+ assert.equal(r.status,404,p);
+ check('Forbidden static file '+p);
+}
+const beforeB=await (await make('/api/live/state',cookieB)).json();
+const streamAbort=new AbortController();
+const stream=await fetch(root+'/api/live/stream',{headers:{Cookie:cookieA},signal:streamAbort.signal});
+assert.equal(stream.status,200);
+assert.match(stream.headers.get('content-type'),/event-stream/);
+const reader=stream.body.getReader();
+let wire='';
+const readChunk=async()=>{const {value,done}=await reader.read();if(!done)wire+=new TextDecoder().decode(value)};
+await readChunk();
+assert.match(wire,/event: snapshot/);
+check('Public SSE connects and sends snapshot');
+const delivery=await make('/api/live/delivery',cookieA,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runsBat:4,runsExtra:0})});
+assert.equal(delivery.status,200);
+assert.equal((await delivery.json()).accepted,true);
+await Promise.race([readChunk(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('SSE delivery timeout')),8000))]);
+assert.match(wire,/event: delivery/);
+check('Public scorer ingestion broadcasts SSE delivery');
+streamAbort.abort();
+const afterA=await (await make('/api/live/state',cookieA)).json();
+const afterB=await (await make('/api/live/state',cookieB)).json();
+assert.notDeepEqual(afterA.terminalState,afterB.terminalState);
+assert.deepEqual(afterB.terminalState,beforeB.terminalState);
+check('Visitor B has no spillover from visitor A');
+console.log('REMOTE SMOKE:',passed,'checks passed');
