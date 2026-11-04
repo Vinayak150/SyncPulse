@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Node ${{ matrix.node-version }} - regression tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ['20', '22']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Run automated tests
+        run: npm test
+
+      - name: Check module syntax
+        run: |
+          node --check src/server/liveTelemetryServer.mjs
+          node --check src/live/providerHub.mjs
+          node --check src/live/liveCenter.mjs
+          node --check src/features/fanFocus.mjs
+
+  browser:
+    name: Chromium - browser contract tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright (test-only)
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Start local Node server
+        run: |
+          npm run start:live > /tmp/syncpulse11-ci-server.log 2>&1 &
+          echo $! > /tmp/syncpulse11-ci-server.pid
+
+      - name: Wait for health endpoint
+        run: |
+          for i in $(seq 1 35); do
+            if curl --fail --silent http://localhost:4111/api/health >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/syncpulse11-ci-server.log
+          exit 1
+
+      - name: Run mocked-provider Chromium acceptance
+        env:
+          TEST_BASE_URL: http://localhost:4111/
+        run: npm run test:browser
